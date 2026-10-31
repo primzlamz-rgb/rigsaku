@@ -166,7 +166,7 @@ main {
 .patch .mid strong { font: 700 22px/1.15 var(--font-label); letter-spacing: .04em; }
 
 /* ── Module tiles ──────────────────────────────────── */
-.modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.modules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .mod {
   position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--raised);
   padding: 12px 10px 10px; min-height: 72px; cursor: pointer; text-align: left;
@@ -352,6 +352,93 @@ details.fold[open] > summary::after { content: "–"; }
 .t3k-card img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--bg); flex: none; }
 .codebox { font: 12px/1.45 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; user-select: all; }
 
+/* ── v1.1: tile dengan tombol power + editor modul ───────────────────────── */
+.mod { padding-right: 10px; padding-top: 46px; min-width: 0; }
+.mod > b { font-size: 18px; }
+.mod span { overflow-wrap: anywhere; }
+.mod .pwr {
+  position: absolute; top: 7px; right: 5px; width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; cursor: pointer;
+}
+.mod .pwr i { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--led-off); }
+.mod.off .pwr i { background: var(--led-off); }
+.mod.on .pwr { border-color: color-mix(in srgb, var(--hue) 60%, var(--line)); }
+.mod.on .pwr i { background: var(--hue); border-color: var(--hue); box-shadow: 0 0 10px var(--hue); }
+.mod .led { display: none; }
+.mod em { font-style: normal; font: 600 12px/1.2 var(--font-label); letter-spacing: .04em; color: var(--fg); opacity: .85; overflow-wrap: anywhere; }
+.stage .mod { padding-right: 10px; padding-top: 12px; }
+.stage .mod .pwr { display: none; }
+.stage .mod .led { display: block; }
+
+.patchbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.patchbar .t { flex: 1; min-width: 0; }
+.patchbar .t b { font: 700 18px/1.15 var(--font-label); letter-spacing: .03em; display: block; overflow-wrap: anywhere; }
+.patchbar .t small { color: var(--muted); font-size: 12px; }
+
+/* Module sheet */
+.msheet-h { display: flex; align-items: center; gap: 12px; }
+.msheet-h .badge { font: 700 26px/1 var(--font-label); letter-spacing: .08em; color: var(--hue); }
+.msheet-h .grow small { display: block; color: var(--muted); font-size: 12px; }
+.bigswitch { position: relative; width: 64px; height: 36px; flex: none; }
+.bigswitch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+.bigswitch i { position: absolute; inset: 0; border-radius: 99px; background: var(--led-off); transition: background .15s; }
+.bigswitch i::after { content: ""; position: absolute; top: 4px; left: 4px; width: 28px; height: 28px; border-radius: 50%; background: var(--fg); transition: transform .15s; }
+.bigswitch input:checked + i { background: var(--hue, var(--accent)); }
+.bigswitch input:checked + i::after { transform: translateX(28px); background: #fff; }
+.modelbtn {
+  width: 100%; text-align: left; border: 1px solid var(--line); border-radius: 12px; background: var(--raised);
+  padding: 12px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+}
+.modelbtn b { font: 700 20px/1.1 var(--font-label); letter-spacing: .03em; display: block; }
+.modelbtn small { color: var(--muted); font-size: 12.5px; display: block; }
+.modelbtn::after { content: "▾"; margin-left: auto; color: var(--muted); font-size: 18px; }
+.modelpick { display: flex; flex-direction: column; gap: 8px; }
+.modellist { display: flex; flex-direction: column; gap: 4px; max-height: 46vh; overflow: auto; border: 1px solid var(--line); border-radius: 10px; padding: 4px; background: var(--bg); }
+.modellist button {
+  text-align: left; border: 0; border-radius: 8px; background: transparent; padding: 9px 10px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.modellist button b { font: 700 16px/1.1 var(--font-label); letter-spacing: .03em; }
+.modellist button small { color: var(--muted); font-size: 12px; }
+.modellist button.sel { background: color-mix(in srgb, var(--hue, var(--accent)) 18%, transparent); }
+.modellist .grp { font: 700 11px/1 var(--font-label); letter-spacing: .14em; color: var(--muted); padding: 10px 10px 4px; text-transform: uppercase; }
+
+.knobs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 8px; }
+@media (min-width: 520px) { .knobs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.knob { display: flex; flex-direction: column; align-items: center; gap: 4px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.knob .dial { width: 84px; height: 84px; max-width: 100%; position: relative; cursor: ns-resize; border-radius: 50%; }
+.knob svg { width: 100%; height: 100%; display: block; }
+.knob .val { position: absolute; inset: 0; display: grid; place-items: center; font: 600 17px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.knob .nm { font: 600 13px/1.1 var(--font-label); letter-spacing: .06em; text-transform: uppercase; text-align: center; overflow-wrap: anywhere; }
+.knob .steps { display: flex; gap: 6px; }
+.knob .steps button { width: 36px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--raised); cursor: pointer; font: 700 16px/1 var(--font-label); }
+.knob.changed .nm { color: var(--hue, var(--accent)); }
+.optrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.optrow > span { font: 600 13px/1.1 var(--font-label); letter-spacing: .06em; text-transform: uppercase; min-width: 90px; }
+
+/* Guide (mode setel) */
+.guide-step { display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; overflow: auto; }
+.guide-step .big { font: 700 34px/1 var(--font-label); letter-spacing: .06em; }
+.guide-step .model { font: 700 24px/1.1 var(--font-label); }
+.guide-vals { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.guide-vals div { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: var(--panel); }
+.guide-vals small { display: block; color: var(--muted); font: 600 12px/1 var(--font-label); letter-spacing: .1em; text-transform: uppercase; }
+.guide-vals b { font: 700 28px/1.1 var(--font-mono); }
+.dots { display: flex; gap: 6px; justify-content: center; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.dots i.cur { background: var(--accent); }
+
+/* Wizard sinkron */
+.wiz { display: flex; flex-direction: column; gap: 10px; }
+.wiz ol { margin: 0; padding-left: 20px; font-size: 13.5px; display: flex; flex-direction: column; gap: 4px; }
+.result-ok { color: var(--ok); font-weight: 600; }
+.result-no { color: var(--warn); font-weight: 600; }
+button.mid { cursor: pointer; color: var(--fg); font: inherit; }
+button.mid strong { font: 700 20px/1.15 var(--font-label); overflow-wrap: anywhere; }
+
+.mod > b { position: absolute; top: 14px; left: 10px; }
+.stage .mod > b { position: static; }
+
 </style>
 </head>
 <body>
@@ -385,15 +472,54 @@ details.fold[open] > summary::after { content: "–"; }
       <div class="card-h"><h2>Patch</h2><span class="sub">ganti patch di pedal</span></div>
       <div class="patch">
         <button class="step" data-patch="down" aria-label="Patch sebelumnya">◀</button>
-        <div class="mid"><small>Patch</small><strong id="patchLabel">—</strong></div>
+        <button class="mid" id="patchMid" aria-label="Atur nomor dan nama patch"><small id="patchNumLbl">Patch</small><strong id="patchLabel">Ketuk untuk atur</strong></button>
         <button class="step" data-patch="up" aria-label="Patch berikutnya">▶</button>
       </div>
+      <div class="list" id="patchEdit" hidden>
+        <div class="grid2">
+          <label class="field"><span>Nomor patch di layar pedal</span><input class="input mono" id="patchNumIn" type="number" inputmode="numeric" min="1" max="99"></label>
+          <label class="field"><span>Nama (catatan Anda)</span><input class="input" id="patchNameIn" maxlength="24" placeholder="mis. Clean Funk"></label>
+        </div>
+        <div class="row"><button class="btn primary sm" id="btnPatchSave">Simpan</button><button class="btn sm ghost" id="btnPatchCancel">Batal</button></div>
+      </div>
+      <p class="note">Pedal belum bisa mengirim nama patch ke aplikasi. Atur nomor patch yang sedang tampil di pedal sekali, beri nama, lalu tombol ◀ ▶ akan ikut menghitung. Kalau Anda ganti patch lewat footswitch, atur ulang nomornya.</p>
     </div>
 
     <div class="card">
-      <div class="card-h"><h2>Modul</h2><span class="sub">ketuk untuk on / off</span><div class="end"><button class="btn sm ghost" id="btnModsReset">Reset lampu</button></div></div>
+      <div class="card-h"><h2>Patch Kerja</h2><span class="sub">rancangan sound yang sedang Anda setel</span></div>
+      <div class="patchbar">
+        <div class="t"><b id="wpName">Patch baru</b><small id="wpSub">Ketuk modul di bawah untuk memilih model dan memutar knob</small></div>
+      </div>
+      <div class="chain" id="wpChain"></div>
+      <div class="row">
+        <button class="btn primary sm" id="btnWpGuide">Panduan setel di pedal</button>
+        <button class="btn sm" id="btnWpSend">Kirim on/off</button>
+        <button class="btn sm" id="btnWpSave">Simpan ke pustaka</button>
+        <button class="btn sm ghost" id="btnWpNew">Kosongkan</button>
+      </div>
+      <details class="fold" id="wpDetail">
+        <summary><span class="note"><b>Detail &amp; catatan patch</b></span></summary>
+        <div class="grid2 stack" style="margin-top:10px">
+          <label class="field"><span>Nama patch</span><input class="input" id="edName" maxlength="24"></label>
+          <label class="field"><span>Lagu / referensi</span><input class="input" id="edSong"></label>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span class="note">BPM</span><input class="input" id="edBpm" type="number" inputmode="numeric" style="width:90px">
+          <span class="note">Patch volume</span><input class="input" id="edVol" type="number" inputmode="numeric" style="width:90px">
+        </div>
+        <label class="field" style="margin-top:8px"><span>Catatan &amp; cara main</span><textarea class="input" id="edNotes"></textarea></label>
+        <div class="field" style="margin-top:8px"><span>Saran NAM / IR</span><div class="codebox" id="edToneHint">—</div></div>
+        <div class="row" style="margin-top:8px">
+          <button class="btn sm" id="btnEdShare">Bagikan sebagai teks</button>
+          <button class="btn sm" id="btnEdT3k">Cari NAM/IR di TONE3000</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Modul</h2><span class="sub">ketuk kartu untuk edit · tombol bulat untuk on/off</span><div class="end"><button class="btn sm ghost" id="btnModsReset">Reset lampu</button></div></div>
       <div class="modules" id="modules"></div>
-      <p class="note">Lampu menunjukkan perintah terakhir yang dikirim aplikasi. Pedal belum bisa dibaca balik, jadi lampu kembali netral setiap ganti patch.</p>
+      <p class="note">Tombol bulat langsung menyalakan/mematikan modul di pedal. Model dan knob yang Anda setel di aplikasi tersimpan sebagai rancangan; "Panduan setel" menuntun Anda memindahkannya ke pedal langkah demi langkah.</p>
     </div>
 
     <div class="card">
@@ -469,10 +595,16 @@ details.fold[open] > summary::after { content: "–"; }
       </div>
       <label class="field"><span>Catatan tambahan (opsional)</span><input class="input" id="aiExtra" placeholder="mis. lebih sedikit gain, tanpa reverb"></label>
       <div class="row">
-        <button class="btn primary" id="btnAiAsk">Buatkan 3 pilihan preset</button>
-        <button class="btn" id="btnAiCopy">Salin prompt untuk Claude</button>
-        <button class="btn ghost" id="btnAiPaste">Tempel jawaban</button>
+        <button class="btn primary" id="btnAiAsk">Buat 3 pilihan preset</button>
+        <button class="btn" id="btnAiPaste">Tempel jawaban Claude</button>
+        <button class="btn ghost sm" id="btnAiCopy">Salin prompt saja</button>
       </div>
+      <ol class="note" id="aiSteps" hidden style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">
+        <li>Prompt sudah disalin dan aplikasi Claude terbuka di tab baru.</li>
+        <li>Di Claude: tekan lama kolom ketik → <b>Tempel</b> → kirim.</li>
+        <li>Setelah Claude selesai menjawab, tekan tombol salin di bawah jawabannya.</li>
+        <li>Kembali ke Rig Saku, tekan <b>Tempel jawaban Claude</b>.</li>
+      </ol>
       <div id="aiPasteBox" hidden class="field">
         <span>Tempel seluruh jawaban dari Claude di sini</span>
         <textarea class="input mono" id="aiPasteText" placeholder='{"presets":[...]}'></textarea>
@@ -480,28 +612,6 @@ details.fold[open] > summary::after { content: "–"; }
       </div>
       <p class="note" id="aiStatus"></p>
       <div class="ai-results" id="aiResults"></div>
-    </div>
-
-    <div class="card" id="editorCard" hidden>
-      <div class="card-h"><h2>Edit Preset</h2><div class="end"><button class="btn sm ghost" id="btnEditorClose">Tutup</button></div></div>
-      <div class="grid2 stack">
-        <label class="field"><span>Nama preset</span><input class="input" id="edName"></label>
-        <label class="field"><span>Lagu / referensi</span><input class="input" id="edSong"></label>
-      </div>
-      <div class="row">
-        <span class="note">BPM</span><input class="input" id="edBpm" type="number" inputmode="numeric" style="width:96px">
-        <span class="note">Patch volume</span><input class="input" id="edVol" type="number" inputmode="numeric" style="width:96px">
-      </div>
-      <label class="field"><span>Catatan &amp; cara main</span><textarea class="input" id="edNotes"></textarea></label>
-      <div id="edMods"></div>
-      <div class="field"><span>Saran NAM / IR</span><div class="codebox" id="edToneHint">—</div></div>
-      <div class="row">
-        <button class="btn primary" id="btnEdSend">Kirim on/off modul ke pedal</button>
-        <button class="btn" id="btnEdSave">Simpan</button>
-        <button class="btn" id="btnEdShare">Bagikan teks</button>
-        <button class="btn" id="btnEdT3k">Cari NAM/IR di TONE3000</button>
-      </div>
-      <p class="note">Modul on/off dikirim langsung via MIDI. Model dan nilai knob jadi panduan: setel di pedal (atau di Valeton Suite), lalu simpan patch di pedal.</p>
     </div>
 
     <div class="card">
@@ -569,7 +679,8 @@ details.fold[open] > summary::after { content: "–"; }
         <div class="row nowrap"><div class="bar grow"><div class="fill" id="mR"></div><div class="hold" id="hR"></div></div><span class="clip" id="clipR">R</span></div>
         <div class="scale"><span>-60</span><span>-36</span><span>-18</span><span>-9</span><span>-3</span><span>0 dB</span></div>
       </div>
-      <p class="note">Atur volume keluaran USB di pedal sampai puncak permainan keras berada di sekitar -6 dB. Lampu merah = sinyal terlalu keras.</p>
+      <div class="row"><span class="note grow">Sumber rekaman</span><div class="seg" data-seg="recSource"><button data-v="L">Kiri (L)</button><button data-v="R">Kanan (R)</button><button data-v="both">Keduanya</button></div></div>
+      <div class="banner"><b>Hasil rekaman clean, tanpa efek preset?</b>Di GP-100 buka menu sistem → <b>USB Audio</b> → <b>Rec Mode</b>, lalu setel L dan R ke <b>Effect</b>. Kalau L = Dry dan R = Effect, pilih sumber "Kanan (R)" di atas. Atur <b>Rec Level</b> sampai puncak permainan keras sekitar −6 dB di meter.</div>
     </div>
 
     <div class="card">
@@ -612,6 +723,23 @@ details.fold[open] > summary::after { content: "–"; }
 
   <!-- ═══════════════ LAB ═══════════════ -->
   <section class="panel" id="tab-lab" aria-label="Lab">
+    <div class="card">
+      <div class="card-h"><h2>Uji Sinkron Pedal</h2><span class="sub">kunci untuk edit knob dari HP</span></div>
+      <div class="wiz">
+        <ol>
+          <li>Pastikan GP-100 tersambung (tab Kontrol).</li>
+          <li>Tekan <b>Mulai uji</b>.</li>
+          <li>Di pedal: buka modul AMP, lalu putar satu knob (mis. Gain) pelan dari kiri ke kanan. Setelah itu ganti patch sekali.</li>
+          <li>Tekan <b>Selesai</b>, lalu kirim hasilnya ke Claude.</li>
+        </ol>
+        <div class="row">
+          <button class="btn primary" id="btnWizStart">Mulai uji</button>
+          <button class="btn" id="btnWizStop" disabled>Selesai</button>
+          <button class="btn ghost" id="btnWizCopy" hidden>Salin hasil untuk Claude</button>
+        </div>
+        <p class="note" id="wizResult"></p>
+      </div>
+    </div>
     <div class="card">
       <div class="card-h"><h2>Monitor MIDI</h2><span class="sub">semua pesan masuk &amp; keluar</span></div>
       <p class="note">Lab ini untuk membongkar protokol editor penuh. Biarkan monitor jalan, lalu putar knob, ganti patch, atau injak footswitch di pedal. Kalau ada pesan SysEx GP-100 yang masuk (ditandai), salin log dan kirim ke Claude.</p>
@@ -729,11 +857,49 @@ details.fold[open] > summary::after { content: "–"; }
   </div>
 </div>
 
+<!-- Module editor sheet -->
+<div class="sheet-wrap" id="msheet" hidden>
+  <div class="sheet" role="dialog" aria-label="Edit modul" id="msheetBox">
+    <div class="grab"></div>
+    <div class="sheet-h msheet-h">
+      <span class="badge" id="msBadge">AMP</span>
+      <div class="grow"><b id="msTitle" style="font:700 16px/1.1 var(--font-label);letter-spacing:.04em">Modul</b><small id="msLive">on/off langsung ke pedal</small></div>
+      <label class="bigswitch" title="Nyalakan / matikan di pedal"><input type="checkbox" id="msPower" aria-label="Modul on/off"><i></i></label>
+      <button class="btn sm" data-close>Selesai</button>
+    </div>
+    <section>
+      <button class="modelbtn" id="msModelBtn"><span><b id="msModel">Pilih model</b><small id="msModelDesc">ketuk untuk memilih</small></span></button>
+      <div class="modelpick" id="msPick" hidden>
+        <input class="input" id="msSearch" placeholder="Cari model atau gear asli (mis. JCM800, Tube Screamer)" autocomplete="off">
+        <div class="modellist" id="msList"></div>
+      </div>
+    </section>
+    <section>
+      <div class="row"><h3 class="grow" style="margin:0">Knob</h3><button class="btn sm ghost" id="msReset">Kembalikan bawaan</button></div>
+      <div class="knobs" id="msKnobs"></div>
+      <div id="msOpts" class="list" style="gap:10px"></div>
+      <p class="note" id="msHint">Geser knob ke atas/bawah, atau pakai tombol − / +. Ketuk dua kali untuk nilai bawaan.</p>
+    </section>
+    <div class="banner"><b>Nilai knob belum bisa dikirim otomatis</b>Protokol penyetelan GP-100 belum terbuka, jadi setel angka ini di pedal (pakai "Panduan setel"). Cara cepat untuk 1 knob: tugaskan pedal EXP patch ini ke parameter itu di pedal, lalu geser slider Expression di tab Kontrol.</div>
+  </div>
+</div>
+
+<!-- Guide overlay -->
+<div class="stage" id="guide" hidden>
+  <div class="stage-top"><b id="gTitle">Panduan Setel</b><button class="btn sm" id="gClose">Tutup</button></div>
+  <div class="dots" id="gDots"></div>
+  <div class="guide-step" id="gStep"></div>
+  <div class="row nowrap">
+    <button class="btn tapbig" id="gPrev" style="min-width:110px">◀ Kembali</button>
+    <button class="btn primary tapbig grow" id="gNext">Lanjut ▶</button>
+  </div>
+</div>
+
 <div class="toast" id="toast" hidden></div>
 
 <script>
 'use strict';
-const VALETON_FX = [[0,"COMP","PRE"],[1,"COMP4","PRE"],[3,"S-Comp","PRE"],[10,"AC Boost","PRE"],[11,"B-Boost","PRE"],[12,"P-Boost","PRE"],[14,"14 Boost","PRE"],[20,"Micro Boost","PRE"],[25,"FAT BB","PRE"],[26,"Boost","PRE"],[27,"Gate 1","NR"],[29,"Gate 2","NR"],[33,"Gate 3","NR"],[16777216,"AC Refiner","PRE"],[16777217,"AC Sim","PRE"],[16777231,"T-Wah","PRE"],[16777237,"A-WAH","PRE"],[16777241,"Step Filter","PRE"],[16777249,"OCTA","PRE"],[16777251,"Pitch","PRE"],[16777252,"P-Bend","PRE"],[16777257,"Detune","MOD"],[16777262,"Bit Smash","MOD"],[16777263,"Ring Mod","PRE"],[16777267,"Saturate","PRE"],[16777269,"Guitar EQ 1","EQ"],[16777270,"Guitar EQ 2","EQ"],[16777273,"Bass EQ 1","EQ"],[16777274,"Bass EQ 2","EQ"],[16777276,"Mess EQ","EQ"],[16777283,"Hyper EQ","EQ"],[16777289,"Hammy","PRE"],[16777293,"Harmonizer 1","PRE"],[16777294,"Harmonizer 2","PRE"],[50331648,"Green OD","DST"],[50331649,"OD 9","PRE"],[50331650,"Yellow OD","PRE"],[50331652,"Swarm","DST"],[50331654,"Super OD","PRE"],[50331656,"Scream OD","DST"],[50331657,"Blues OD","PRE"],[50331658,"Force","DST"],[50331659,"Tube","DST"],[50331662,"Blues Master","DST"],[50331663,"Master OD","DST"],[50331664,"TaiChi OD","DST"],[50331668,"Penesas","PRE"],[50331676,"Precise OD","DST"],[50331678,"Timmy OD","DST"],[50331682,"Lazaro","DST"],[50331684,"Red Haze","DST"],[50331686,"Sora Fuzz","DST"],[50331689,"Plustortion","DST"],[50331690,"SM Dist","DST"],[50331691,"Darktale","DST"],[50331693,"Chief","DST"],[50331694,"Master Dist","DST"],[50331696,"La Charger","DST"],[50331698,"Revolt","DST"],[50331711,"Flex OD","DST"],[50331712,"Bass OD","DST"],[50331716,"Black Bass","DST"],[50331728,"Empire OD","DST"],[50331729,"Bass Hammer","DST"],[50331730,"Flagman Dist","DST"],[67108864,"A-Chorus","MOD"],[67108865,"G-Chorus","MOD"],[67108866,"C-Chorus","MOD"],[67108872,"B-Chorus","MOD"],[67108879,"M-Chorus","MOD"],[67108881,"Jet","MOD"],[67108882,"B-Jet","MOD"],[67108883,"N-Jet","MOD"],[67108884,"Trem Jet","MOD"],[67108885,"V-Roto","MOD"],[67108886,"G-Roto","MOD"],[67108887,"Vibrato","MOD"],[67108888,"Vibrato T","MOD"],[67108889,"O-Phase","MOD"],[67108890,"G-Phase","MOD"],[67108891,"S-Phase","MOD"],[67108894,"Pan Phase","MOD"],[67108895,"M-Vibe","MOD"],[67108896,"Vibe","MOD"],[67108897,"O-Trem","MOD"],[67108902,"Sine Trem","MOD"],[67108903,"Triangle Trem","MOD"],[67108904,"Bias Trem","MOD"],[67108909,"Auto Swell","PRE"],[67108911,"Hold","PRE"],[67108912,"Freeze","PRE"],[83886081,"V-Wah","WAH"],[83886086,"S-Wah","WAH"],[83886087,"B-Wah","WAH"],[83886088,"C-Wah","WAH"],[83886090,"P-Wah","WAH"],[100663299,"Volume","VOL"],[117440513,"Tweedy","AMP"],[117440515,"Bellman 59N","AMP"],[117440516,"Dark Twin","AMP"],[117440517,"Dark DLX","AMP"],[117440521,"Dark Vibra","AMP"],[117440525,"Silver Twin","AMP"],[117440527,"SUPDual CL","AMP"],[117440528,"Foxy 15TB","AMP"],[117440529,"Foxy 30N","AMP"],[117440532,"J-120 CL","AMP"],[117440533,"Match CL","AMP"],[117440537,"L-Star CL","AMP"],[117440538,"BogSV CL","AMP"],[117440539,"Z38 CL","AMP"],[117440543,"Knights CL","AMP"],[117440546,"Bad-KT CL","AMP"],[117440547,"Solo100 CL","AMP"],[117440548,"Bellman 59B","AMP"],[117440551,"Foxy 30TB","AMP"],[117440552,"SUPDual OD","AMP"],[117440554,"UK 45","AMP"],[117440555,"UK 45+","AMP"],[117440556,"UK 45JP","AMP"],[117440557,"UK 50","AMP"],[117440558,"UK 50+","AMP"],[117440559,"UK 50JP","AMP"],[117440560,"UK SLP","AMP"],[117440565,"UK 800","AMP"],[117440569,"Mess2C+ 1","AMP"],[117440570,"Mess2C+ 2","AMP"],[117440571,"Mess2C+ 3","AMP"],[117440573,"BogSV OD","AMP"],[117440574,"Juice30 OD","AMP"],[117440576,"Flagman 1","AMP"],[117440577,"Flagman 2","AMP"],[117440579,"Bog BlueV","AMP"],[117440580,"Bog BlueM","AMP"],[117440583,"Solo100 OD","AMP"],[117440584,"Match OD","AMP"],[117440585,"Z38 OD","AMP"],[117440586,"L-Star OD","AMP"],[117440587,"Bad-KT OD","AMP"],[117440590,"UK 900","AMP"],[117440595,"Juice R100","AMP"],[117440597,"Mess4 LD","AMP"],[117440598,"Mess4 LD 2","AMP"],[117440599,"Mess4 LD 3","AMP"],[117440601,"Solo100 LD","AMP"],[117440602,"EV 51","AMP"],[117440605,"Flagman+ 1","AMP"],[117440606,"Flagman+ 2","AMP"],[117440607,"Eagle 120","AMP"],[117440608,"Eagle 120+","AMP"],[117440611,"Power LD","AMP"],[117440613,"Dizz VH","AMP"],[117440614,"Dizz VH S","AMP"],[117440616,"Mess DualV","AMP"],[117440617,"Mess DualM","AMP"],[117440618,"Dizz VH+","AMP"],[117440619,"Dizz VH+ S","AMP"],[117440621,"Bog RedV","AMP"],[117440622,"Bog RedM","AMP"],[117440627,"Classic Bass","AMP"],[117440629,"Foxy Bass","AMP"],[117440631,"Mess Bass","AMP"],[117440635,"Knights CL+","AMP"],[117440636,"Knights OD","AMP"],[134217845,"Mini Bass","AMP"],[134217846,"Bass Pre","AMP"],[134217850,"AC Pre","AMP"],[134217851,"AC Pre 2","AMP"],[167772160,"SUP ZEP","CAB"],[167772161,"TWD CP","CAB"],[167772162,"TWD PRC","CAB"],[167772163,"DARK LUX","CAB"],[167772164,"DARK VIT","CAB"],[167772165,"ROUT","CAB"],[167772166,"BogSV","CAB"],[167772167,"Bad-KT","CAB"],[167772168,"FOXY 1","CAB"],[167772169,"D STAR","CAB"],[167772170,"TOM OPEN","CAB"],[167772171,"TWD LUX","CAB"],[167772172,"US STO","CAB"],[167772173,"ACE","CAB"],[167772174,"UK G12","CAB"],[167772175,"FOXY 2","CAB"],[167772176,"Match","CAB"],[167772177,"J-120","CAB"],[167772178,"Dark Twin","CAB"],[167772179,"UK GRN 1","CAB"],[167772180,"TWD SUP","CAB"],[167772181,"BOUTI","CAB"],[167772182,"Bellman 1","CAB"],[167772183,"SUP","CAB"],[167772184,"MATT TWD","CAB"],[167772185,"SUP Star","CAB"],[167772186,"Freed","CAB"],[167772187,"Dark CS","CAB"],[167772188,"DB Rock","CAB"],[167772189,"Blue SK","CAB"],[167772190,"Bellman 2","CAB"],[167772191,"UK LD","CAB"],[167772192,"UK TD","CAB"],[167772193,"UK MD","CAB"],[167772194,"UK GRN 2","CAB"],[167772195,"EV","CAB"],[167772196,"Mess","CAB"],[167772197,"Bog","CAB"],[167772198,"Eagle","CAB"],[167772199,"Uban","CAB"],[167772200,"Solo","CAB"],[167772201,"Juice","CAB"],[167772202,"H-WAY","CAB"],[167772203,"UK Dark","CAB"],[167772204,"Way","CAB"],[167772205,"Dumb","CAB"],[167772206,"Dizz","CAB"],[167772207,"TRP","CAB"],[167772208,"UK 75","CAB"],[167772209,"King","CAB"],[167772210,"ADM 1","CAB"],[167772211,"Workman 1","CAB"],[167772212,"F-TOP","CAB"],[167772213,"US BASS","CAB"],[167772214,"MATT","CAB"],[167772215,"ADM 2","CAB"],[167772216,"AMPG 1","CAB"],[167772217,"Workman 2","CAB"],[167772218,"HACK","CAB"],[167772219,"AMPG 2","CAB"],[167772220,"AC","CAB"],[167772221,"AC Dream","CAB"],[167772222,"OM","CAB"],[167772223,"JUMBO","CAB"],[167772224,"Bird","CAB"],[167772225,"GA","CAB"],[167772226,"Classic AC","CAB"],[167772227,"Mandolin","CAB"],[167772228,"Fretless Bass","CAB"],[167772229,"Double Bass","CAB"],[168820736,"User IR","CAB"],[168820737,"User IR","CAB"],[168820738,"User IR","CAB"],[168820739,"User IR","CAB"],[168820740,"User IR","CAB"],[168820741,"User IR","CAB"],[168820742,"User IR","CAB"],[168820743,"User IR","CAB"],[168820744,"User IR","CAB"],[168820745,"User IR","CAB"],[168820746,"User IR","CAB"],[168820747,"User IR","CAB"],[168820748,"User IR","CAB"],[168820749,"User IR","CAB"],[168820750,"User IR","CAB"],[168820751,"User IR","CAB"],[168820752,"User IR","CAB"],[168820753,"User IR","CAB"],[168820754,"User IR","CAB"],[168820755,"User IR","CAB"],[184549376,"Pure","DLY"],[184549377,"Analog","DLY"],[184549378,"Tape","DLY"],[184549379,"Dual Echo","DLY"],[184549380,"Ping Pong","DLY"],[184549381,"Slapback","DLY"],[184549382,"Sweep Echo","DLY"],[184549385,"Ring Echo","DLY"],[184549387,"Tube","DLY"],[184549388,"M-Echo","DLY"],[184549389,"Sweet Echo","DLY"],[184549394,"999 Echo","DLY"],[184549396,"Vintage Rack","DLY"],[184549405,"BBD Delay S","DLY"],[184549407,"Digital Delay S","DLY"],[184549409,"Tape Delay S","DLY"],[184549414,"Lofi Echo","DLY"],[184549416,"Rev Echo","DLY"],[184549418,"Ambience 1","DLY"],[184549422,"Ambience 2","DLY"],[184549426,"Broken Delay","DLY"],[184549427,"Ice Delay","DLY"],[201326592,"Room","RVB"],[201326593,"Hall","RVB"],[201326594,"Church","RVB"],[201326595,"Plate","RVB"],[201326596,"Spring","RVB"],[201326598,"N-Star","RVB"],[201326599,"Deepsea","RVB"],[201326600,"Sweet Space","RVB"],[201326601,"Shimmer","RVB"],[201326603,"Studio","RVB"],[201326604,"Club","RVB"],[201326605,"Concert","RVB"],[201326606,"Arena","RVB"],[201326609,"Amp Spring","RVB"],[201326610,"Tube Spring","RVB"],[251658240,"SnapTone","AMP"],[251658241,"SnapTone","AMP"],[251658242,"SnapTone","AMP"],[251658243,"SnapTone","AMP"],[251658244,"SnapTone","AMP"],[251658245,"SnapTone","DST"],[251658246,"SnapTone","DST"],[251658247,"SnapTone","DST"],[251658248,"SnapTone","DST"],[251658249,"SnapTone","DST"]];
+const FXDB = [[0,"COMP","PRE","Ross™ Compressor",[["k","Sustain",0,20,0,100,1],["k","Volume",1,50,0,100,1]]],[1,"COMP4","PRE","Keeley® C4 4-knob compressor",[["k","Sustain",0,20,0,100,1],["k","Attack",1,60,0,100,1],["k","Volume",2,50,0,100,1],["k","Clipping",3,10,0,100,1]]],[3,"S-Comp","PRE","Flexible, fully adjustable compressor effect",[["k","Threshold",0,20,0,100,1],["k","Ratio",1,30,0,100,1],["k","Volume",2,50,0,100,1],["k","Attack",3,50,0,100,1],["k","Release",4,50,0,100,1],["k","Tone",5,50,0,100,1],["k","Blend",6,50,0,100,1]]],[10,"AC Boost","PRE","Xotic® AC Booster",[["k","Gain",0,29,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1]]],[11,"B-Boost","PRE","Xotic® BB Preamp",[["k","Gain",0,20,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1]]],[12,"P-Boost","PRE","Xotic® RC Booster",[["k","Gain",0,20,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1]]],[14,"14 Boost","PRE","Fortin® Grind",[["k","Gain",0,20,0,100,1]]],[20,"Micro Boost","PRE","MXR® M133 Micro Amp",[["k","Gain",0,50,0,100,1]]],[25,"FAT BB","PRE","Fulltone® Fat Boost",[["k","Bass",0,50,0,100,1],["k","Treble",1,50,0,100,1],["k","Volume",2,20,0,100,1],["s","Low Cut",3,0,[["OFF",0],["ON",1]]]]],[26,"Boost","PRE","Xotic® EP Booster",[["k","Gain",0,20,0,100,1],["s","+3dB",1,1,[["OFF",0],["ON",1]]],["s","Bright",2,1,[["OFF",0],["ON",1]]]]],[27,"Gate 1","NR","ISP® Decimator™ noise gate",[["k","Threshold",0,20,0,100,1]]],[29,"Gate 2","NR","Flexible noise gate with attack and release control",[["k","Threshold",0,20,0,100,1],["k","Attack",1,25,0,100,1],["k","Release",2,60,0,100,1]]],[33,"Gate 3","NR","",[["k","Threshold",0,20,0,100,1],["k","Ratio",1,20,0,100,1],["k","Attack",2,20,1,500,1],["k","Release",3,200,10,10000,1],["k","Hold",4,500,0,1000,1],["k","Hysteresis",5,-3,-10,0,1]]],[16777216,"AC Refiner","PRE","For acoustic instruments, bringing a more natural sound",[["k","Shape",0,50,0,100,1]]],[16777217,"AC Sim","PRE","Boss® AC-2 Acoustic Simulator",[["k","Body",0,50,0,100,1],["k","Top",1,50,0,100,1],["k","Volume",2,50,0,100,1],["c","Mode",3,2,[["Standard",0],["Jumbo",1],["Enhanced",2],["Piezo",3]]]]],[16777231,"T-Wah","PRE","Touch wah: control the wah sound by playing intensity",[["k","Sense",0,50,0,100,1],["k","Range",1,50,0,100,1],["k","Q",2,50,0,100,1],["k","Mix",3,50,0,100,1],["c","Mode",4,0,[["Guitar",0],["Bass",1]]]]],[16777237,"A-WAH","PRE","Variable auto wah effect",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["k","Low",3,25,0,100,1],["k","Q",4,70,0,100,1],["k","High",5,60,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]]]],[16777241,"Step Filter","PRE","A 4-step auto filter machine for creating synth-like sounds",[["k","Step 1",0,10,0,100,1],["k","Step 2",1,30,0,100,1],["k","Step 3",2,55,0,100,1],["k","Step 4",3,85,0,100,1],["k","Rate",4,10,0,100,1],["s","Sync",5,0,[["OFF",0],["ON",1]]]]],[16777249,"OCTA","PRE","Polyphonic octave effect",[["k","Low Oct",0,50,0,100,1],["k","High Oct",1,50,0,100,1],["k","Dry",2,50,0,100,1]]],[16777251,"Pitch","PRE","Polyphonic pitch shifter/harmonizer (CTRL: Dry only)",[["k","Hi Pitch",0,12,0,24,1],["k","Low Pitch",1,-12,-24,0,1],["k","Dry",2,50,0,100,1],["k","Hi Vol",3,50,0,100,1],["k","Low Vol",4,50,0,100,1]]],[16777252,"P-Bend","PRE","Polyphonic pitch shifter/harmonizer (CTRL: Wet/Dry)",[["k","Hi Pitch",0,12,0,12,1],["k","Low Pitch",1,0,-12,0,1],["k","Wet",2,50,0,100,1],["k","Dry",3,50,0,100,1],["k","Range",4,50,0,100,1]]],[16777257,"Detune","MOD","Detuning effect that combines slightly shifted signal to create a chorus-like sound",[["k","Detune",0,-25,-50,50,1],["k","Wet",1,50,0,100,1],["k","Dry",2,50,0,100,1]]],[16777262,"Bit Smash","MOD","Bitcrushing/sample reducing effect",[["k","Mix",0,50,0,100,1],["k","Krush",1,20,0,100,1],["k","Bit",2,20,0,100,1],["k","Hi Cut",3,50,0,100,1],["k","Lo Cut",4,50,0,100,1]]],[16777263,"Ring Mod","PRE","Ring modulator for creating inharmonic frequencies (like bells and chimes)",[["k","Mix",0,50,0,100,1],["k","Freq",1,50,0,100,1],["k","Fine",2,0,-50,50,1],["k","Tone",3,50,0,100,1]]],[16777267,"Saturate","PRE","Vintage tape saturation simulator",[["k","Saturation",0,50,0,100,1],["k","Mix",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","High Cut",3,50,0,100,1]]],[16777269,"Guitar EQ 1","EQ","5 Band EQ for guitars (125Hz, 400Hz, 800Hz, 1.6kHz, 4kHz)",[["k","125Hz",0,0,-50,50,1],["k","400Hz",1,0,-50,50,1],["k","800Hz",2,0,-50,50,1],["k","1.6kHz",3,0,-50,50,1],["k","4kHz",4,0,-50,50,1],["k","Volume",5,50,0,100,1]]],[16777270,"Guitar EQ 2","EQ","5 Band EQ for guitars (100Hz, 500Hz, 1kHz, 3kHz, 6kHz)",[["k","100Hz",0,0,-50,50,1],["k","500Hz",1,0,-50,50,1],["k","1kHz",2,0,-50,50,1],["k","3kHz",3,0,-50,50,1],["k","6kHz",4,0,-50,50,1],["k","Volume",5,50,0,100,1]]],[16777273,"Bass EQ 1","EQ","Equalizer for bass",[["k","33Hz",0,0,-50,50,1],["k","150Hz",1,0,-50,50,1],["k","600Hz",2,0,-50,50,1],["k","2kHz",3,0,-50,50,1],["k","8kHz",4,0,-50,50,1],["k","Volume",5,50,0,100,1]]],[16777274,"Bass EQ 2","EQ","Equalizer for bass",[["k","50Hz",0,0,-50,50,1],["k","120Hz",1,0,-50,50,1],["k","400Hz",2,0,-50,50,1],["k","800Hz",3,0,-50,50,1],["k","4.5kHz",4,0,-50,50,1],["k","Volume",5,50,0,100,1]]],[16777276,"Mess EQ","EQ","Mesa/Boogie® amps 5 band EQ",[["k","80Hz",0,0,-50,50,1],["k","240Hz",1,0,-50,50,1],["k","750Hz",2,0,-50,50,1],["k","2.2kHz",3,0,-50,50,1],["k","6.6kHz",4,0,-50,50,1]]],[16777283,"Hyper EQ","EQ","10-band graphic EQ suitable for any instrument",[["k","31Hz",0,0,-12,12,1],["k","63Hz",1,0,-12,12,1],["k","125Hz",2,0,-12,12,1],["k","250Hz",3,0,-12,12,1],["k","500Hz",4,0,-12,12,1],["k","1kHz",5,0,-12,12,1],["k","2kHz",6,0,-12,12,1],["k","4kHz",7,0,-12,12,1],["k","8kHz",8,0,-12,12,1],["k","16kHz",9,0,-12,12,1],["k","Volume",10,50,0,100,1]]],[16777289,"Hammy","PRE","",[["c","Range",0,2,[["-2 Oct",0],["-1 Oct",1],["+1 Oct",2],["+2 Oct",3],["+/-1Oct",4],["+/-2Oct",5]]],["c","Harmony",1,0,[["OFF",0],["ON",1]]],["k","Volume",2,50,0,100,1],["k","Position",3,0,0,100,1]]],[16777293,"Harmonizer 1","PRE","",[["k","Mix",0,50,0,100,1],["c","Key",1,0,[["C",0],["C#",1],["D",2],["D#",3],["E",4],["F",5],["F#",6],["G",7],["G#",8],["A",9],["A#",10],["B",11]]],["c","Mode",2,0,[["Major",0],["Minor",1],["H. Minor",2],["Dorian",3],["Phrygian",4],["Lydian",5],["Mixolydian",6],["Locrian",7]]],["c","Interval",3,8,[["-Oct",0],["-7th",1],["-6th",2],["-5th",3],["-4th",4],["-3rd",5],["-2nd",6],["+2nd",7],["+3rd",8],["+4th",9],["+5th",10],["+6th",11],["+7th",12],["+Oct",13]]],["c","Smooth Mode",4,0,[["OFF",0],["ON",1]]]]],[16777294,"Harmonizer 2","PRE","",[["k","Mix",0,50,0,100,1],["c","Key",1,0,[["C",0],["C#",1],["D",2],["D#",3],["E",4],["F",5],["F#",6],["G",7],["G#",8],["A",9],["A#",10],["B",11]]],["c","Mode",2,0,[["Major",0],["Minor",1],["H. Minor",2],["Dorian",3],["Phrygian",4],["Lydian",5],["Mixolydian",6],["Locrian",7]]],["c","Interval 1",3,8,[["-Oct",0],["-7th",1],["-6th",2],["-5th",3],["-4th",4],["-3rd",5],["-2nd",6],["+2nd",7],["+3rd",8],["+4th",9],["+5th",10],["+6th",11],["+7th",12],["+Oct",13]]],["c","Interval 2",4,10,[["-Oct",0],["-7th",1],["-6th",2],["-5th",3],["-4th",4],["-3rd",5],["-2nd",6],["+2nd",7],["+3rd",8],["+4th",9],["+5th",10],["+6th",11],["+7th",12],["+Oct",13]]],["c","Smooth Mode",5,0,[["OFF",0],["ON",1]]]]],[50331648,"Green OD","DST","Ibanez® TS-808 Tube Screamer",[["k","Gain",0,40,0,100,1],["k","Tone",1,70,0,100,1],["k","Volume",2,50,0,100,1]]],[50331649,"OD 9","PRE","Ibanez® TS9 Tube Screamer",[["k","Gain",0,40,0,100,1],["k","Tone",1,70,0,100,1],["k","Volume",2,50,0,100,1]]],[50331650,"Yellow OD","PRE","DOD 250 Preamp Overdrive",[["k","Gain",0,40,0,100,1],["k","Volume",1,50,0,100,1]]],[50331652,"Swarm","DST","Providence® SOV-2 Stampede",[["k","Gain",0,40,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331654,"Super OD","PRE","Boss SD-1 Super Overdrive",[["k","Gain",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331656,"Scream OD","DST","Tube Screamer® style overdrive pedal",[["k","Gain",0,30,0,100,1],["k","Tone",1,60,0,100,1],["k","Volume",2,50,0,100,1],["s","Fat",3,0,[["OFF",0],["ON",1]]],["s","Air",4,1,[["OFF",0],["ON",1]]]]],[50331657,"Blues OD","PRE","Boss BD-2 Blues Driver",[["k","Gain",0,40,0,100,1],["k","Tone",1,60,0,100,1],["k","Volume",2,50,0,100,1]]],[50331658,"Force","DST","Fulltone® OCD",[["k","Gain",0,40,0,100,1],["k","Tone",1,60,0,100,1],["k","Volume",2,50,0,100,1],["c","Mode",3,1,[["LP",0],["HP",1]]]]],[50331659,"Tube","DST","Simulates tube-driven tape echo sound",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1]]],[50331662,"Blues Master","DST","Marshall® BluesBreaker",[["k","Gain",0,60,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331663,"Master OD","DST","Marshall JVM410 / JCM800 tone EQ stage",[["k","Gain",0,40,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[50331664,"TaiChi OD","DST","Hermida® Zendrive®",[["k","Gain",0,40,0,100,1],["k","Tone",1,30,0,100,1],["k","Volume",2,50,0,100,1],["k","Voice",3,60,0,100,1]]],[50331668,"Penesas","PRE","Klon® Centaur (Gold Overdrive)",[["k","Gain",0,40,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331676,"Precise OD","DST","Horizon Devices® Precision Drive",[["k","Gain",0,30,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Attack",3,2,0,5,1],["k","Gate",4,10,0,100,1]]],[50331678,"Timmy OD","DST","Paul Cochrane® Timmy overdrive",[["k","Gain",0,40,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1],["c","Mode",4,1,[["I",0],["II",1],["III",2]]]]],[50331682,"Lazaro","DST","Electro-Harmonix® Big Muff Pi® fuzz/distortion pedal",[["k","Sustain",0,40,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331684,"Red Haze","DST","Dallas-Arbiter® Fuzz Face",[["k","Fuzz",0,50,0,100,1],["k","Volume",1,50,0,100,1]]],[50331686,"Sora Fuzz","DST","Sola Sound® Tone Bender",[["k","Fuzz",0,50,0,100,1],["k","Volume",1,50,0,100,1]]],[50331689,"Plustortion","DST","MXR® M104 Distortion +",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1]]],[50331690,"SM Dist","DST","Boss DS-1 Distortion",[["k","Gain",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331691,"Darktale","DST","ProCo™ The Rat (early LM308 op-amp version)",[["k","Gain",0,50,0,100,1],["k","Filter",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331693,"Chief","DST","Marshall® Guv'nor",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[50331694,"Master Dist","DST","Marshall® Shredmaster Distortion",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Contour",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[50331696,"La Charger","DST","MI Audio® Crunch Box",[["k","Gain",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[50331698,"Revolt","DST","",[["k","Gain",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1],["c","Mode",3,0,[["I",0],["II",1],["III",2]]]]],[50331711,"Flex OD","DST","",[["k","Gain",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1],["c","Mode",3,0,[["Normal",0],["Scoop",1],["Edge",2]]],["k","Blend",4,50,0,100,1]]],[50331712,"Bass OD","DST","",[["k","Gain",0,50,0,100,1],["k","Blend",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[50331716,"Black Bass","DST","Darkglass Microtubes B7K",[["k","Gain",0,50,0,100,1],["k","Blend",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Low",3,50,0,100,1],["k","Lo-mid",4,50,0,100,1],["k","Hi-mid",5,50,0,100,1],["k","Treble",6,50,0,100,1],["c","Attack",7,2,[["Cut",0],["Boost",1],["Flat",2]]]]],[50331728,"Empire OD","DST","",[["k","Gain",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1],["c","Mode",3,0,[["Clean",0],["OD",1],["Dist",2]]]]],[50331729,"Bass Hammer","DST","",[["k","Gain",0,50,0,100,1],["k","Master",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Mid Freq",4,50,0,100,1],["k","Treble",5,50,0,100,1],["s","Drive",6,0,[["OFF",0],["ON",1]]]]],[50331730,"Flagman Dist","DST","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1],["k","Presence",4,50,0,100,1],["k","Tight",5,50,0,100,1]]],[67108864,"A-Chorus","MOD","",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Tone",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108865,"G-Chorus","MOD","Boss CE-2 Chorus Ensemble",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108866,"C-Chorus","MOD","Boss DC-2 Dimension C",[["c","Mode",0,0,[["1",0],["2",1],["3",2],["4",3]]]]],[67108872,"B-Chorus","MOD","Chorus for bassists",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108879,"M-Chorus","MOD","A multi-dimensional chorus pedal",[["k","Mix",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Filter",2,50,0,100,1],["k","Depth L",3,50,0,100,1],["k","Depth C",4,50,0,100,1],["k","Depth R",5,50,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]]]],[67108881,"Jet","MOD","Classic flanger effect",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Pre Delay",2,50,0,100,1],["k","Feedback",3,50,0,100,1],["s","Sync",4,0,[["OFF",0],["ON",1]]]]],[67108882,"B-Jet","MOD","Classic flanger effect for bass",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Pre Delay",2,50,0,100,1],["k","Feedback",3,50,0,100,1],["s","Sync",4,0,[["OFF",0],["ON",1]]]]],[67108883,"N-Jet","MOD","A flanger with negative feedback, producing \"underwater\" style sound",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Pre Delay",2,50,0,100,1],["k","Feedback",3,50,0,100,1],["s","Sync",4,0,[["OFF",0],["ON",1]]]]],[67108884,"Trem Jet","MOD","Combines flanger and tremolo in one",[["k","Flg Depth",0,50,0,100,1],["k","Flg Rate",1,0.5,0.1,10,0.1],["k","Feedback",2,50,0,100,1],["k","Trm Depth",3,50,0,100,1],["k","Trm Rate",4,0.5,0.1,10,0.1],["s","Flg Sync",5,0,[["OFF",0],["ON",1]]],["s","Trm Sync",6,0,[["OFF",0],["ON",1]]]]],[67108885,"V-Roto","MOD","Analog BBD chorus pedal (vibrato mode)",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["s","Sync",2,0,[["OFF",0],["ON",1]]]]],[67108886,"G-Roto","MOD","Legendary huge ensemble chorus pedal from the late 1970s (vibrato mode)",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108887,"Vibrato","MOD","A classic vibrato",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108888,"Vibrato T","MOD","",[["k","Sens",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Output",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108889,"O-Phase","MOD","MXR® M101 Phase 90",[["k","Rate",0,0.5,0.1,10,0.1],["s","Sync",1,0,[["OFF",0],["ON",1]]]]],[67108890,"G-Phase","MOD","Boss PH-1® Phaser, a BBD-based green phase pedal",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["s","Sync",2,0,[["OFF",0],["ON",1]]]]],[67108891,"S-Phase","MOD","Electro-Harmonix® Small Stone",[["c","Color",0,0,[["Warm",0],["Sharp",1]]],["k","Rate",1,0.5,0.1,10,0.1],["s","Sync",2,0,[["OFF",0],["ON",1]]]]],[67108894,"Pan Phase","MOD","A special, subtle phaser combining tremolo/pan variations",[["k","Phs Depth",0,50,0,100,1],["k","Phs Rate",1,0.5,0.1,10,0.1],["k","Pan Depth",2,50,0,100,1],["k","Pan Rate",3,0.5,0.1,10,0.1],["s","Phs Sync",4,0,[["OFF",0],["ON",1]]],["s","Pan Sync",5,0,[["OFF",0],["ON",1]]]]],[67108895,"M-Vibe","MOD","Voodoo Lab® Micro Vibe",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["s","Sync",2,0,[["OFF",0],["ON",1]]]]],[67108896,"Vibe","MOD","Shin-Ei Uni-Vibe classic phase shifter (chorus)",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["c","Mode",3,0,[["Chorus",0],["Vibrato",1]]],["s","Sync",4,0,[["OFF",0],["ON",1]]]]],[67108897,"O-Trem","MOD","Demeter® TRM-1 Tremulator",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["s","Sync",2,0,[["OFF",0],["ON",1]]]]],[67108902,"Sine Trem","MOD","Sine tremolo waveform with super wide tonal range",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108903,"Triangle Trem","MOD","Triangle tremolo waveform with super wide tonal range",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]]]],[67108904,"Bias Trem","MOD","Bias tremolo waveform with super wide tonal range",[["k","Depth",0,50,0,100,1],["k","Rate",1,0.5,0.1,10,0.1],["k","Volume",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["k","Bias",4,50,0,100,1]]],[67108909,"Auto Swell","PRE","Auto swell effect that makes guitar sound like violin",[["k","Attack",0,1000,80,4000,1],["c","Curve",1,0,[["Line",0],["Exp",1],["Log",2]]]]],[67108911,"Hold","PRE","",[["k","Volume",0,50,0,100,1],["s","Activate",1,0,[["OFF",0],["ON",1]]]]],[67108912,"Freeze","PRE","",[["k","Volume",0,50,0,100,1],["k","Attack",1,30,0,100,1],["k","Release",2,50,0,100,1],["s","Activate",3,0,[["OFF",0],["ON",1]]]]],[83886081,"V-Wah","WAH","VOX® V846",[["k","Range",0,50,0,100,1],["k","Q",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Position",3,50,0,100,1]]],[83886086,"S-Wah","WAH","Classic wah tone",[["k","Range",0,50,0,100,1],["k","Q",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Position",3,50,0,100,1]]],[83886087,"B-Wah","WAH","Wah designed for basses",[["k","Range",0,50,0,100,1],["k","Q",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Position",3,50,0,100,1]]],[83886088,"C-Wah","WAH","Dunlop® CryBaby® (Classic 60's)",[["k","Range",0,50,0,100,1],["k","Q",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Position",3,50,0,100,1]]],[83886090,"P-Wah","WAH","John Petrucci's rack wah settings, Volume, Q, and six EQ controls",[["k","Range",0,50,0,100,1],["k","Q",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Position",3,50,0,100,1],["s","EQ",4,1,[["OFF",0],["ON",1]]]]],[100663299,"Volume","VOL","Pure volume control",[["k","Volume",0,100,0,100,1]]],[117440513,"Tweedy","AMP","Fender® Tweed Deluxe",[["k","Gain",0,30,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[117440515,"Bellman 59N","AMP","Fender® '59 Bassman",[["k","Gain",0,30,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440516,"Dark Twin","AMP","Fender® '65 Twin Reverb",[["k","Gain",0,35,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,40,0,100,1],["k","Treble",4,60,0,100,1],["s","Bright",5,1,[["OFF",0],["ON",1]]]]],[117440517,"Dark DLX","AMP","Fender® Deluxe Reverb",[["k","Gain",0,30,0,100,1],["k","Volume ",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1]]],[117440521,"Dark Vibra","AMP","Fender® Vibroverb",[["k","Gain",0,30,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Treble",3,50,0,100,1],["s","Bright",4,1,[["OFF",0],["ON",1]]]]],[117440525,"Silver Twin","AMP","Fender® Silverface Twin Reverb",[["k","Gain",0,40,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440527,"SUPDual CL","AMP","Supro® Dual-Tone 1624T (CH1 clean tone)",[["k","Gain",0,30,0,100,1],["k","Tone",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[117440528,"Foxy 15TB","AMP","VOX® AC-100 bass amp",[["k","Gain",0,30,0,100,1],["k","Tone Cut",1,60,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440529,"Foxy 30N","AMP","VOX® AC30HW (Clean)",[["k","Gain",0,30,0,100,1],["k","Tone Cut",1,50,0,100,1],["k","Volume",2,50,0,100,1],["s","Bright",3,0,[["OFF",0],["ON",1]]]]],[117440532,"J-120 CL","AMP","Roland JC-120 Jazz Chorus solid state combo",[["k","Gain",0,50,0,100,1],["k","Bass",1,50,0,100,1],["k","Middle",2,50,0,100,1],["k","Treble",3,50,0,100,1],["s","Bright",4,0,[["OFF",0],["ON",1]]]]],[117440533,"Match CL","AMP","Matchless™ Chieftain 212 combo (Clean)",[["k","Gain",0,35,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440537,"L-Star CL","AMP","Mesa/Boogie® Lone Star™ (Clean)",[["k","Gain",0,40,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440538,"BogSV CL","AMP","Bogner® Shiva 20th Anniversary version (Clean)",[["k","Gain",0,30,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Treble",4,50,0,100,1],["s","Bright",5,0,[["OFF",0],["ON",1]]]]],[117440539,"Z38 CL","AMP","Dr. Z® Maz 38 Sr. combo (Clean)",[["k","Gain",0,35,0,100,1],["k","Tone Cut",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440543,"Knights CL","AMP","Grindrod® Pendragon PG20C (Clean, Bright OFF)",[["k","Gain",0,35,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440546,"Bad-KT CL","AMP","Bad Cat® Hot Cat 30 (Clean)",[["k","Gain",0,35,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1]]],[117440547,"Solo100 CL","AMP","Soldano® SLO100 (Clean)",[["k","Gain",0,30,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440548,"Bellman 59B","AMP","Based on Fender® '59 Bassman",[["k","Gain",0,35,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440551,"Foxy 30TB","AMP","VOX® AC30HW (Drive)",[["k","Gain",0,30,0,100,1],["k","Tone Cut",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Treble",4,50,0,100,1],["c","Char",5,0,[["Cool",0],["Hot",1]]]]],[117440552,"SUPDual OD","AMP","Supro® Dual-Tone 1624T (CH2 dirty tone)",[["k","Gain 1",0,50,0,100,1],["k","Tone 1",1,50,0,100,1],["k","Gain 2",2,50,0,100,1],["k","Tone 2",3,50,0,100,1],["k","Volume",4,50,0,100,1]]],[117440554,"UK 45","AMP","Marshall® JTM45 (normal channel)",[["k","Gain",0,25,0,100,1],["k","Presence",1,65,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,45,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,65,0,100,1]]],[117440555,"UK 45+","AMP","Marshall® JTM45",[["k","Gain",0,45,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440556,"UK 45JP","AMP","Marshall® JTM45 (Jumper normal to Channel 2)",[["k","Gain 1",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1],["k","Gain 2",6,50,0,100,1]]],[117440557,"UK 50","AMP","Marshall® JMP50 (normal channel)",[["k","Gain",0,40,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440558,"UK 50+","AMP","Marshall® JMP50",[["k","Gain",0,40,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440559,"UK 50JP","AMP","Marshall® JMP50 (Jumper normal to Channel 2)",[["k","Gain 1",0,40,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1],["k","Gain 2",6,50,0,100,1]]],[117440560,"UK SLP","AMP","Marshall 1959HW™",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440565,"UK 800","AMP","Marshall® JCM800",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440569,"Mess2C+ 1","AMP","Mesa/Boogie® Mark II C+",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440570,"Mess2C+ 2","AMP","Mesa/Boogie® Mark II C+",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440571,"Mess2C+ 3","AMP","Mesa/Boogie® Mark II C+",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440573,"BogSV OD","AMP","Bogner® Shiva 20th Anniversary version (Overdrive)",[["k","Gain",0,30,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440574,"Juice30 OD","AMP","Orange® AD30™ (Dirty channel)",[["k","Gain",0,30,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440576,"Flagman 1","AMP","Friedman BE100 Plexi Channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440577,"Flagman 2","AMP","Friedman BE 100 Deluxe Plexi Channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440579,"Bog BlueV","AMP","Bogner® XTC blue channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440580,"Bog BlueM","AMP","Bogner® XTC blue channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440583,"Solo100 OD","AMP","Soldano® SLO100 (Crunch)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440584,"Match OD","AMP","Matchless™ Chieftain 212 combo (Overdrive)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440585,"Z38 OD","AMP","Dr. Z® Maz 38 Sr. combo (Overdrive)",[["k","Gain",0,30,0,100,1],["k","Tone Cut",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440586,"L-Star OD","AMP","Mesa/Boogie® Lone Star™ (Overdrive)",[["k","Input",0,50,0,100,1],["k","Gain",1,50,0,100,1],["k","Presence",2,50,0,100,1],["k","Volume",3,50,0,100,1],["k","Bass",4,50,0,100,1],["k","Middle",5,50,0,100,1],["k","Treble",6,50,0,100,1]]],[117440587,"Bad-KT OD","AMP","Bad Cat® Hot Cat 30 (Overdrive)",[["k","Gain",0,30,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Edge",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440590,"UK 900","AMP","Marshall® JCM900",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440595,"Juice R100","AMP","Orange® Rockerverb 100™ (Dirty channel)",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440597,"Mess4 LD","AMP","Mesa/Boogie® Mark IV™ (Lead channel)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440598,"Mess4 LD 2","AMP","Mesa/Boogie® Mark IV™ (Lead 2 channel)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440599,"Mess4 LD 3","AMP","Mesa/Boogie® Mark IV™ (Lead 3 channel)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440601,"Solo100 LD","AMP","Soldano® SLO100 (Overdrive)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440602,"EV 51","AMP","Peavey® 5150® (LEAD channel)",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1],["k","Presence",5,50,0,100,1]]],[117440605,"Flagman+ 1","AMP","Friedman BE100 Plexi Channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440606,"Flagman+ 2","AMP","Friedman BE 100 Deluxe Brown Eye Channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440607,"Eagle 120","AMP","ENGL® Savage 120 Amplifier",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440608,"Eagle 120+","AMP","ENGL® Savage 120 Amplifier",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440611,"Power LD","AMP","ENGL® Powerball II E645/2 (CH4)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440613,"Dizz VH","AMP","Diezel® VH4: Channel 1 (Clean)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440614,"Dizz VH S","AMP","Diezel® VH4: Channel 2 (Crunch)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440616,"Mess DualV","AMP","Mesa/Boogie® Dual Rectifier® (Vintage mode)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440617,"Mess DualM","AMP","Mesa/Boogie® Dual Rectifier® (Modern mode)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440618,"Dizz VH+","AMP","Diezel® VH4: Channel 3 (Distortion)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440619,"Dizz VH+ S","AMP","Diezel® VH4: Channel 4 (Ultra High Gain)",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440621,"Bog RedV","AMP","Bogner® XTC red channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440622,"Bog RedM","AMP","Bogner® XTC red channel",[["k","Gain",0,50,0,100,1],["k","Presence",1,50,0,100,1],["k","Volume",2,50,0,100,1],["k","Bass",3,50,0,100,1],["k","Middle",4,50,0,100,1],["k","Treble",5,50,0,100,1]]],[117440627,"Classic Bass","AMP","Ampeg® SVT bass amp",[["k","Gain",0,50,0,100,1],["k","Bass",1,50,0,100,1],["k","Middle",2,50,0,100,1],["c","Midrange",3,1,[["220Hz",0],["450Hz",1],["800Hz",2],["1.6kHz",3],["3kHz",4]]],["k","Treble",4,50,0,100,1],["k","Volume",5,50,0,100,1]]],[117440629,"Foxy Bass","AMP","VOX® AC-100 bass amp",[["k","Volume",0,50,0,100,1],["k","Bass",1,50,0,100,1],["k","Treble",2,50,0,100,1]]],[117440631,"Mess Bass","AMP","Mesa/Boogie® Bass 400",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440635,"Knights CL+","AMP","Grindrod® Pendragon PG20C (Clean, Bright ON)",[["k","Gain",0,20,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[117440636,"Knights OD","AMP","Grindrod® Pendragon PG20C (Overdrive)",[["k","Gain",0,30,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[134217845,"Mini Bass","AMP","Ampeg® B-15 \"Flip Top\" bass",[["k","Volume",0,50,0,100,1],["k","Bass",1,50,0,100,1],["k","Treble",2,50,0,100,1]]],[134217846,"Bass Pre","AMP","Alembic™ F-2B preamp",[["k","Volume",0,50,0,100,1],["s","Bright",1,0,[["OFF",0],["ON",1]]],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[134217850,"AC Pre","AMP","AER® Colourizer 2 acoustic preamp, EQ F1: 90Hz to 1.6kHz",[["k","Volume",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Balance",2,50,0,100,1],["k","EQ Freq",3,50,0,100,1],["k","EQ Q",4,50,0,100,1],["k","EQ Gain",5,50,0,100,1]]],[134217851,"AC Pre 2","AMP","AER® Colourizer 2 acoustic preamp, EQ F2: 680Hz to 11kHz",[["k","Volume",0,50,0,100,1],["k","Tone",1,50,0,100,1],["k","Balance",2,50,0,100,1],["k","EQ Freq",3,50,0,100,1],["k","EQ Q",4,50,0,100,1],["k","EQ Gain",5,50,0,100,1]]],[167772160,"SUP ZEP","CAB","Supro® 1x6\" cabinet with oval speaker",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772161,"TWD CP","CAB","Vintage Fender® Champ 1x8\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772162,"TWD PRC","CAB","Vintage Fender® Princeton 1x10\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772163,"DARK LUX","CAB","Vintage Fender® Deluxe 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772164,"DARK VIT","CAB","Vintage Fender® Vibrolux 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772165,"ROUT","CAB","Carr® Rambler 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772166,"BogSV","CAB","Bogner® Shiva 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772167,"Bad-KT","CAB","Bad Cat® Hot Cat 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772168,"FOXY 1","CAB","Vintage VOX® AC15 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772169,"D STAR","CAB","Mesa/Boogie® Lonestar 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772170,"TOM OPEN","CAB","Swart® Atomic Space 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772171,"TWD LUX","CAB","Fender® Tweed Deluxe 1x12 cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772172,"US STO","CAB","1980's Mesa/Boogie® 1x12\\\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772173,"ACE","CAB","Morgan® AC-20 Deluxe 1x12 cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772174,"UK G12","CAB","Marshall® 1x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772175,"FOXY 2","CAB","Vintage VOX® AC30 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772176,"Match","CAB","Matchless® Chieftain 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772177,"J-120","CAB","Roland Jazz Chorus 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772178,"Dark Twin","CAB","Fender® '65 Twin Reverb",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772179,"UK GRN 1","CAB","Marshall® 2550 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772180,"TWD SUP","CAB","Fender® Tweed 2x10\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772181,"BOUTI","CAB","A unique custom 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772182,"Bellman 1","CAB","Vintage Fender® \"Piggyback\" Bassman® 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772183,"SUP","CAB","Supro® 1624T 2x12 cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772184,"MATT TWD","CAB","Matchless® 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772185,"SUP Star","CAB","Mesa/Boogie® Lonestar 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772186,"Freed","CAB","Fryette® Deliverance 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772187,"Dark CS","CAB","Custom modified Fender® 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772188,"DB Rock","CAB","Two-Rock® 2x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772189,"Blue SK","CAB","Custom 2x12\" cabinet with Celestion® Alnico Blue speakers",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772190,"Bellman 2","CAB","Fender® '59 Bassman® 4x10\\\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772191,"UK LD","CAB","Marshall® 1960AV 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772192,"UK TD","CAB","68 Marshall® Basketweave 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772193,"UK MD","CAB","Custom modified Marshall® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772194,"UK GRN 2","CAB","Vintage Marshall® 4x12\" cabinet with Celestion® Greenback® speakers",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772195,"EV","CAB","Peavey® 6505 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772196,"Mess","CAB","Mesa/Boogie® Rectifier® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772197,"Bog","CAB","Bogner® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772198,"Eagle","CAB","ENGL® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772199,"Uban","CAB","Bogner® Uberkab 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772200,"Solo","CAB","Soldano® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772201,"Juice","CAB","Orange® PPC412 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772202,"H-WAY","CAB","Vintage Hiwatt® SE4123 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772203,"UK Dark","CAB","1968 Marshall® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772204,"Way","CAB","Vintage WEM® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772205,"Dumb","CAB","Dumble® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772206,"Dizz","CAB","Diezel® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772207,"TRP","CAB","Hughes & Kettner® Triamp 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772208,"UK 75","CAB","Marshall® 4x12\" cabinet with Celestion® G12T-75 speakers",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772209,"King","CAB","Mesa/Boogie® Road King® 4x12\" cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772210,"ADM 1","CAB","David Eden® 1x15\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772211,"Workman 1","CAB","SWR® 1x15\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772212,"F-TOP","CAB","Ampeg® PF-115HE 1x15\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772213,"US BASS","CAB","Mesa/Boogie® 2x10\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772214,"MATT","CAB","Mark Bass® 2x10\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772215,"ADM 2","CAB","David Eden® 4x10\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772216,"AMPG 1","CAB","Ampeg® SVT-410HE 4x10\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772217,"Workman 2","CAB","SWR® Workingman's 4x10\\\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772218,"HACK","CAB","Hartke® 4x12\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772219,"AMPG 2","CAB","Ampeg SVT-810E 8x10\" bass cabinet",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772220,"AC","CAB","Dreadnought guitar simulation",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772221,"AC Dream","CAB","Dreadnought guitar simulation 2",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772222,"OM","CAB","Simulates an OM type acoustic guitar",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772223,"JUMBO","CAB","Simulates a jumbo acoustic guitar",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772224,"Bird","CAB","Simulates the iconic \"H-Bird\" acoustic guitar",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772225,"GA","CAB","Simulates a GA type acoustic guitar",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772226,"Classic AC","CAB","Simulates a classical guitar",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772227,"Mandolin","CAB","Simulates a mandolin",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772228,"Fretless Bass","CAB","Simulates a fretless acoustic bass",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[167772229,"Double Bass","CAB","Simulates a double bass",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820736,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820737,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820738,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820739,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820740,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820741,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820742,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820743,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820744,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820745,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820746,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820747,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820748,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820749,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820750,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820751,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820752,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820753,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820754,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[168820755,"User IR","CAB","User IR WAV (44kHz/1024 sample rate)",[["k","Volume",1,50,0,100,1],["k","Low Cut",5,19,19,2000,1],["k","High Cut",6,20001,2000,20001,1]]],[184549376,"Pure","DLY","Pure, precise delay sound",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549377,"Analog","DLY","Warm delay sound with analog feel",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549378,"Tape","DLY","Roland RE-201 Space Echo",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549379,"Dual Echo","DLY","",[["k","Mix A",0,20,0,100,1],["k","Time A",1,500,20,4000,1],["k","Feedback A",2,20,-100,100,1],["k","Mix B",3,20,0,100,1],["k","Time B",4,500,20,4000,1],["k","Feedback B",5,20,-100,100,1],["s","Sync A",6,0,[["OFF",0],["ON",1]]],["s","Sync B",7,0,[["OFF",0],["ON",1]]],["s","Trail",8,0,[["OFF",0],["ON",1]]]]],[184549380,"Ping Pong","DLY","Ping-pong delay producing stereo feedback bounces Left-Right",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549381,"Slapback","DLY","Classic slapback echo",[["k","Mix",0,20,0,100,1],["k","Time",1,150,20,300,1],["k","Feedback",2,50,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",3,0,[["OFF",0],["ON",1]]]]],[184549382,"Sweep Echo","DLY","Delay effect with sweeping filter modulated repeats",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["k","Sweep Depth",3,50,0,100,1],["k","Sweep Rate",4,50,0,100,1],["s","Sweep Sync",5,0,[["OFF",0],["ON",1]]],["s","Time Sync",6,0,[["OFF",0],["ON",1]]],["s","Trail",7,0,[["OFF",0],["ON",1]]]]],[184549385,"Ring Echo","DLY","Delay effect with ring modulated repeats",[["k","Dly Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["k","Ring Mix",3,50,0,100,1],["k","Freq",4,50,0,100,1],["k","Tone",5,50,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]],["s","Trail",7,0,[["OFF",0],["ON",1]]]]],[184549387,"Tube","DLY","Simulates tube-driven tape echo sound",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,30,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549388,"M-Echo","DLY","A multi-tap delay simulating a huge 4-head tape echo machine",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,30,0,100,1],["k","Tone",3,50,0,100,1],["k","Mode",4,5,1,12,1],["s","Sync",5,0,[["OFF",0],["ON",1]]],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[184549389,"Sweet Echo","DLY","Classic analog delay pedal (1981–1984 era)",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,30,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549394,"999 Echo","DLY","Maxon® AD900 Analog Delay",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,30,0,100,1],["s","Sync",3,0,[["OFF",0],["ON",1]]],["s","Trail",4,0,[["OFF",0],["ON",1]]]]],[184549396,"Vintage Rack","DLY","Vintage 1980's rack-mount delay machine",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["k","Mod",3,50,0,100,1],["k","Tone",4,50,0,100,1],["s","Sync",5,0,[["OFF",0],["ON",1]]],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[184549405,"BBD Delay S","DLY","Delay based on BBD analog delay",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,20,-100,100,1],["k","Time R%",3,61.8,1,100,1],["k","Spread",4,100,-100,100,1],["k","Level",5,50,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]],["s","Trail",7,0,[["OFF",0],["ON",1]]]]],[184549407,"Digital Delay S","DLY","Digital delay",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,20,-100,100,1],["k","Time R%",3,61.8,1,100,1],["k","Spread",4,100,-100,100,1],["k","Level",5,50,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]],["s","Trail",7,0,[["OFF",0],["ON",1]]]]],[184549409,"Tape Delay S","DLY","Delay/echo effect using tape machine simulation",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,20,-100,100,1],["k","Time R%",3,61.8,1,100,1],["k","Spread",4,100,-100,100,1],["k","Wow &amp;",5,50,0,100,1],["c","Age",6,0,[["Past",0],["Present",1],["Future",2]]],["k","Scrape",7,100,0,100,1],["k","Drive",8,0,0,100,1],["k","Level",9,50,0,100,1],["s","Sync",10,0,[["OFF",0],["ON",1]]],["s","Trail",11,0,[["OFF",0],["ON",1]]]]],[184549414,"Lofi Echo","DLY","Lo-fi delay effect",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,20,-100,100,1],["k","Crush",3,20,0,100,1],["k","Bit",4,20,0,100,1],["s","Sync",5,0,[["OFF",0],["ON",1]]],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[184549416,"Rev Echo","DLY","Special delay effect with reversed feedback",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,20,-100,100,1],["k","Level",3,50,0,100,1],["s","Sync",4,0,[["OFF",0],["ON",1]]],["s","Trail",5,0,[["OFF",0],["ON",1]]]]],[184549418,"Ambience 1","DLY","Multi-tap delay (tonal variation 1)",[["k","Mix",0,30,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["k","Level",3,50,0,100,1],["k","Mod",4,100,0,100,1],["k","Tone",5,50,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]],["s","Trail",7,0,[["OFF",0],["ON",1]]]]],[184549422,"Ambience 2","DLY","Multi-tap delay (tonal variation 2)",[["k","Mix",0,30,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,50,0,100,1],["k","Level",3,50,0,100,1],["k","Mod",4,100,0,100,1],["k","Tone",5,50,0,100,1],["s","Sync",6,0,[["OFF",0],["ON",1]]],["s","Trail",7,0,[["OFF",0],["ON",1]]]]],[184549426,"Broken Delay","DLY","",[["k","Mix",0,30,0,100,1],["k","Time",1,500,20,4000,1],["k","Feedback",2,20,0,100,1],["k","Latch",3,50,0,100,1],["k","Cut",4,100,0,100,1],["s","Sync",5,0,[["OFF",0],["ON",1]]],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[184549427,"Ice Delay","DLY","",[["k","Mix",0,20,0,100,1],["k","Time",1,500,20,2000,1],["k","Feedback",2,30,0,100,1],["k","Tone",3,50,0,100,1],["k","Mod",4,30,0,100,1],["c","Pitch",5,28,[["-Oct",0],["-11",1],["-10",2],["-9",3],["-8",4],["-7",5],["-6",6],["-5",7],["-4",8],["-3",9],["-2",10],["-1",11],["-50 cents",12],["-20 cents",13],["0",14],["+20 cents",15],["+50 cents",16],["1",17],["2",18],["3",19],["4",20],["5",21],["6",22],["7",23],["8",24],["9",25],["10",26],["11",27],["+Oct",28]]],["c","Slice",6,2,[["Short",0],["Medium",1],["Long",2]]],["k","Direction",7,-100,-100,100,1],["k","Blend",8,40,0,100,1],["k","Smooth",9,0,0,100,1],["k","Level",10,50,0,100,1],["s","Sync",11,0,[["OFF",0],["ON",1]]],["s","Trail",12,0,[["OFF",0],["ON",1]]]]],[201326592,"Room","RVB","Room reverb simulation",[["k","Mix",0,30,0,100,1],["k","Pre Delay",1,50,0,100,1],["k","Decay",2,50,0,100,1],["s","Trail",3,0,[["OFF",0],["ON",1]]]]],[201326593,"Hall","RVB","Hall reverb simulation",[["k","Mix",0,30,0,100,1],["k","Pre Delay",1,50,0,100,1],["k","Decay",2,50,0,100,1],["s","Trail",3,0,[["OFF",0],["ON",1]]]]],[201326594,"Church","RVB","Church reverb simulation",[["k","Mix",0,30,0,100,1],["k","Pre Delay",1,50,0,100,1],["k","Decay",2,50,0,100,1],["s","Trail",3,0,[["OFF",0],["ON",1]]]]],[201326595,"Plate","RVB","EMT 140 plate reverb",[["k","Mix",0,30,0,100,1],["k","Decay",1,50,0,100,1],["k","High Damp",2,50,0,100,1],["s","Trail",3,0,[["OFF",0],["ON",1]]]]],[201326596,"Spring","RVB","Roland RE-201 Space Echo spring reverb",[["k","Mix",0,30,0,100,1],["k","Decay",1,50,0,100,1],["k","Tone",2,50,0,100,1],["s","Trail",3,0,[["OFF",0],["ON",1]]]]],[201326598,"N-Star","RVB","Special-tuned reverb with lush bright decays",[["k","Mix",0,30,0,100,1],["k","Decay",1,50,0,100,1],["s","Trail",2,0,[["OFF",0],["ON",1]]]]],[201326599,"Deepsea","RVB","Special-tuned reverb with huge deep decays",[["k","Mix",0,30,0,100,1],["k","Decay",1,50,0,100,1],["s","Trail",2,0,[["OFF",0],["ON",1]]]]],[201326600,"Sweet Space","RVB","Modulated reverb that is lush and sweet",[["k","Mix",0,30,0,100,1],["k","Pre Delay",1,50,0,100,1],["k","Decay",2,50,0,100,1],["k","Lo End",3,0,-50,50,1],["k","Hi End",4,0,-50,50,1],["s","Trail",5,0,[["OFF",0],["ON",1]]]]],[201326601,"Shimmer","RVB","Rich, shimmering reverb",[["k","Mix",0,30,0,100,1],["k","Pre Delay",1,50,0,100,1],["k","Decay",2,50,0,100,1],["k","Lo End",3,0,-50,50,1],["k","Hi End",4,0,-50,50,1],["s","Trail",5,0,[["OFF",0],["ON",1]]]]],[201326603,"Studio","RVB","Recording studio reverb simulation",[["k","Mix",0,25,0,100,1],["k","Pre Delay",1,0,0,300,1],["k","Decay",2,50,0,100,1],["k","Low Damp",3,50,0,100,1],["k","Hi Damp",4,50,0,100,1],["k","Mod",5,50,0,100,1],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[201326604,"Club","RVB","Club reverb simulation",[["k","Mix",0,25,0,100,1],["k","Pre Delay",1,0,0,300,1],["k","Decay",2,70,0,100,1],["k","Low Damp",3,50,0,100,1],["k","Hi Damp",4,50,0,100,1],["k","Mod",5,50,0,100,1],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[201326605,"Concert","RVB","Concert hall reverb simulation",[["k","Mix",0,25,0,100,1],["k","Pre Delay",1,100,0,300,1],["k","Decay",2,50,0,100,1],["k","Low Damp",3,50,0,100,1],["k","Hi Damp",4,50,0,100,1],["k","Mod",5,50,0,100,1],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[201326606,"Arena","RVB","Arena reverb simulation",[["k","Mix",0,25,0,100,1],["k","Pre Delay",1,100,0,300,1],["k","Decay",2,70,0,100,1],["k","Low Damp",3,50,0,100,1],["k","Hi Damp",4,50,0,100,1],["k","Mod",5,50,0,100,1],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[201326609,"Amp Spring","RVB","",[["k","Mix",0,25,0,100,1],["k","Pre Delay",1,0,0,300,1],["k","Decay",2,50,0,100,1],["k","Low Damp",3,50,0,100,1],["k","Hi Damp",4,50,0,100,1],["k","Mod",5,50,0,100,1],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[201326610,"Tube Spring","RVB","",[["k","Mix",0,25,0,100,1],["k","Pre Delay",1,0,0,300,1],["k","Decay",2,50,0,100,1],["k","Low Damp",3,50,0,100,1],["k","Hi Damp",4,50,0,100,1],["k","Mod",5,50,0,100,1],["s","Trail",6,0,[["OFF",0],["ON",1]]]]],[251658240,"SnapTone","AMP","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658241,"SnapTone","AMP","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658242,"SnapTone","AMP","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658243,"SnapTone","AMP","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658244,"SnapTone","AMP","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658245,"SnapTone","DST","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658246,"SnapTone","DST","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658247,"SnapTone","DST","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658248,"SnapTone","DST","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]],[251658249,"SnapTone","DST","",[["k","Gain",0,50,0,100,1],["k","Volume",1,50,0,100,1],["k","Bass",2,50,0,100,1],["k","Middle",3,50,0,100,1],["k","Treble",4,50,0,100,1]]]];
 'use strict';
 /* Rig Saku — companion app untuk Valeton GP-100.
    Satu file, tanpa server. Kontrol via MIDI CC standar GP-100, rekaman lewat USB audio,
@@ -833,6 +999,7 @@ const DEFAULTS = {
   bpm: 120, drumBpm: 100, drumStyle: 1, backingGain: 80,
   tab: 'kontrol', aiGuitar: '', aiOutput: 'headphone',
   autoMix: 1, mixTarget: -14, mixRole: 'balance', mixRoom: 0,
+  patchNum: null, patchNames: {}, patchMax: 99, recSource: 'both',
 };
 const S = (() => {
   let v = {};
@@ -1066,6 +1233,20 @@ const Control = {
     });
     $$('[data-patch]').forEach((b) => b.addEventListener('click', () => this.patch(b.dataset.patch)));
     this.renderMods();
+    this.paintPatch();
+    $('#patchMid').addEventListener('click', () => {
+      const ed = $('#patchEdit'); ed.hidden = !ed.hidden;
+      $('#patchNumIn').value = S.patchNum || ''; $('#patchNameIn').value = (S.patchNames || {})[S.patchNum] || '';
+      if (!ed.hidden) $('#patchNumIn').focus();
+    });
+    $('#patchNumIn').addEventListener('input', (e) => { $('#patchNameIn').value = (S.patchNames || {})[+e.target.value] || ''; });
+    $('#btnPatchSave').addEventListener('click', () => {
+      const n = clamp(Math.round(+$('#patchNumIn').value) || 0, 0, S.patchMax || 99);
+      S.patchNum = n || null; S.patchNames = S.patchNames || {};
+      if (n) { const nm = $('#patchNameIn').value.trim(); if (nm) S.patchNames[n] = nm; else delete S.patchNames[n]; }
+      saveS(); this.paintPatch(); $('#patchEdit').hidden = true;
+    });
+    $('#btnPatchCancel').addEventListener('click', () => { $('#patchEdit').hidden = true; });
     $('#btnModsReset').addEventListener('click', () => { this.resetMods(); toast('Lampu modul direset'); });
 
     // Slider CC
@@ -1126,20 +1307,40 @@ const Control = {
     if (S.swapPatch) up = !up;
     if (!Midi.cc(up ? CC.patchUp : CC.patchDown, ON)) return;
     this.resetMods();
-    const lbl = $('#patchLabel');
-    lbl.textContent = dir === 'up' ? 'Berikutnya ▶' : '◀ Sebelumnya';
-    clearTimeout(this._pt); this._pt = setTimeout(() => { lbl.textContent = '—'; }, 900);
+    if (S.patchNum) { const max = S.patchMax || 99; S.patchNum = ((S.patchNum - 1 + (dir === 'up' ? 1 : -1) + max) % max) + 1; saveS(); }
+    this.paintPatch(true);
   },
-
+  paintPatch(flash) {
+    const n = S.patchNum, names = S.patchNames || {};
+    $('#patchNumLbl').textContent = n ? `Patch ${String(n).padStart(2, '0')}` : 'Patch';
+    $('#patchLabel').textContent = n ? (names[n] || 'tanpa nama') : 'Ketuk untuk atur';
+    if (flash) { const el = $('#patchMid'); el.animate?.([{ background: 'color-mix(in srgb, var(--accent) 25%, var(--bg))' }, { background: 'var(--bg)' }], { duration: 450 }); }
+  },
+  namePatch(name) {
+    if (!S.patchNum) { toast('Atur dulu nomor patch di tab Kontrol'); return; }
+    S.patchNames = S.patchNames || {}; S.patchNames[S.patchNum] = String(name || '').slice(0, 24); saveS(); this.paintPatch();
+    toast(`Patch ${S.patchNum} dicatat sebagai "${S.patchNames[S.patchNum]}"`);
+  },
   renderMods() {
-    for (const host of [$('#modules'), $('#stageModules')]) {
-      host.innerHTML = '';
-      for (const m of MODULES) {
-        const b = h('button', { class: 'mod', style: { '--hue': m.hue }, dataset: { mod: m.id }, 'aria-pressed': 'mixed' },
-          h('i', { class: 'led' }), h('b', { text: m.id }), h('span', { text: m.desc }));
-        b.addEventListener('click', () => this.toggleMod(m.id));
-        host.append(b);
-      }
+    const host = $('#modules'); host.innerHTML = '';
+    for (const m of MODULES) {
+      const pwr = h('span', { class: 'pwr', role: 'button', tabindex: 0, 'aria-label': `${m.id} on/off` }, h('i'));
+      const card = h('div', { class: 'mod', role: 'button', tabindex: 0, style: { '--hue': m.hue }, dataset: { mod: m.id }, 'aria-label': `Edit ${m.id}` },
+        pwr, h('b', { text: m.id }), h('em', { dataset: { model: m.id } }), h('span', { text: m.desc }));
+      const toggle = (e) => { e.stopPropagation(); this.toggleMod(m.id); };
+      pwr.addEventListener('click', toggle);
+      pwr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); } });
+      const edit = () => MSheet.open(WP.cur, m.id, () => { WP.save(); WP.paint(); });
+      card.addEventListener('click', edit);
+      card.addEventListener('keydown', (e) => { if (e.target === card && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); edit(); } });
+      host.append(card);
+    }
+    const stage = $('#stageModules'); stage.innerHTML = '';
+    for (const m of MODULES) {
+      const b = h('button', { class: 'mod', style: { '--hue': m.hue }, dataset: { mod: m.id }, 'aria-pressed': 'mixed' },
+        h('i', { class: 'led' }), h('b', { text: m.id }), h('span', { text: m.desc }));
+      b.addEventListener('click', () => this.toggleMod(m.id));
+      stage.append(b);
     }
     this.paintMods();
   },
@@ -1148,13 +1349,16 @@ const Control = {
       const st = this.mods[b.dataset.mod];
       b.classList.toggle('on', st === true);
       b.classList.toggle('off', st === false);
-      b.setAttribute('aria-pressed', st == null ? 'mixed' : String(st));
+      if (b.tagName === 'BUTTON') b.setAttribute('aria-pressed', st == null ? 'mixed' : String(st));
     });
+    if (typeof WP !== 'undefined' && WP.cur) $$('[data-model]').forEach((em) => { const d = WP.cur.modules[em.dataset.model]; em.textContent = d && d.model ? d.model : ''; });
   },
   toggleMod(id) { this.setMod(id, this.mods[id] !== true); },
-  setMod(id, on) {
+  setMod(id, on, quiet) {
     if (!Midi.cc(CC[id], on ? ON : OFF)) return false;
-    this.mods[id] = on; this.paintMods(); return true;
+    this.mods[id] = on;
+    if (!quiet && typeof WP !== 'undefined' && WP.cur) { WP.cur.modules[id].on = on; WP.save(); WP.paint(); }
+    this.paintMods(); return true;
   },
   resetMods() { for (const k in this.mods) this.mods[k] = null; this.paintMods(); },
 
@@ -1385,7 +1589,10 @@ const Rec = {
     this.mon = this.ctx.createGain(); this.mon.gain.value = S.monitor ? 1 : 0;
     this.src.connect(this.node); this.node.connect(this.mon); this.mon.connect(this.ctx.destination);
     const track = this.stream.getAudioTracks()[0];
-    $('#audioDevName').textContent = `${track.label || 'Input audio'} · ${this.ctx.sampleRate / 1000} kHz`;
+    const st = track.getSettings ? track.getSettings() : {};
+    this.inCh = st.channelCount || 0;
+    $('#audioDevName').textContent = `${track.label || 'Input audio'} · ${this.ctx.sampleRate / 1000} kHz${this.inCh ? ' · ' + (this.inCh === 1 ? 'mono' : this.inCh + ' kanal') : ''}`;
+    if (this.inCh === 1) toast('HP hanya memberi input mono; kiri dan kanan akan sama. Setel Rec Mode L di pedal ke Effect.', 6000);
     UI.audioState(true, false);
     $('#btnRec').disabled = false; $('#recHint').textContent = 'Siap merekam';
     $('#btnAudio').textContent = 'Audio aktif ✓';
@@ -1490,7 +1697,10 @@ const Rec = {
       for (let i = 0; i < a.length; i++, o++) if (o >= 0) { L[o] = a[i]; R[o] = b[i]; }
     }
     this.chunks = [];
-    const chs = S.chanMode === 1 ? [L.map((v, i) => (v + R[i]) / 2)] : [L, R];
+    let chs;
+    if (S.recSource === 'L') chs = [L];
+    else if (S.recSource === 'R') chs = [R];
+    else chs = S.chanMode === 1 ? [L.map((v, i) => (v + R[i]) / 2)] : [L, R];
     const blob = DSP.encodeWAV(chs, sr, S.bitDepth);
     const n = (await DB.all('takes').catch(() => [])).length + 1;
     const take = {
@@ -1537,7 +1747,7 @@ const Rec = {
     $('#btnBackingClear').addEventListener('click', () => this.clearBacking());
     const sb = $('#slBacking'); sb.value = S.backingGain; $('#oBacking').textContent = S.backingGain;
     sb.addEventListener('input', () => { S.backingGain = +sb.value; saveS(); $('#oBacking').textContent = sb.value; if (this.backingGain) this.backingGain.gain.value = sb.value / 100; });
-    bindSeg('countIn'); bindSeg('metro');
+    bindSeg('countIn'); bindSeg('metro'); bindSeg('recSource');
     bindSeg('monitor', (v) => { if (this.mon) this.mon.gain.value = v ? 1 : 0; });
     document.addEventListener('visibilitychange', async () => {
       if (document.visibilityState === 'visible' && this.recording && this.lock == null) { try { this.lock = await navigator.wakeLock?.request('screen'); } catch {} }
@@ -2009,50 +2219,338 @@ const T3K = {
   },
 };
 
-// ─── Kosakata model efek keluarga Valeton (kode → nama, modul) ───────────────
-// Diambil dari algorithm.xml Valeton GP-200 (via proyek open-source GP200 Studio).
-// GP-100 memakai pola kode yang sama ((kategori<<24)|indeks) dan sebagian besar model ini.
+// ─── Katalog efek keluarga Valeton: kode, nama, modul, gear asli, parameter ──
+// Sumber data: algorithm.xml Valeton (via proyek open-source GP200 Studio) + daftar FX komunitas.
+// GP-100 memakai pola kode ((kategori<<24)|indeks) dan sebagian besar model yang sama.
 const FX = (() => {
-  const byCode = new Map(), byMod = {};
-  for (const [code, name, mod] of VALETON_FX) {
-    byCode.set(code, { name, mod });
-    const m = mod === 'WAH' ? 'MOD' : mod;
-    if (m === 'VOL') continue;
-    (byMod[m] = byMod[m] || new Set()).add(name === 'SnapTone' ? 'SnapTone (NAM)' : name);
+  const byCode = new Map(), byMod = {}, byName = new Map();
+  const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9+]/g, '');
+  for (const [code, name, mod0, desc, params] of FXDB) {
+    if (mod0 === 'VOL') continue;
+    const mod = mod0 === 'WAH' ? 'PRE' : mod0; // di GP-100, wah ada di modul PRE
+    const e = {
+      code, name, mod, desc: (desc || '').replace(/[®™]/g, ''),
+      params: params.map((p) => (p[0] === 'k'
+        ? { t: 'k', n: p[1], d: p[3], min: p[4], max: p[5], step: p[6] || 1 }
+        : { t: p[0], n: p[1], d: p[3], opts: p[4].map((o) => ({ n: o[0], v: o[1] })) })),
+    };
+    byCode.set(code, e);
+    (byMod[mod] = byMod[mod] || []).push(e);
+    const k = mod + ':' + norm(name);
+    if (!byName.has(k)) byName.set(k, e);
   }
-  return { byCode, byMod: Object.fromEntries(Object.entries(byMod).map(([k, v]) => [k, [...v]])) };
+  const find = (mod, name) => {
+    const n = norm(name); if (!n) return null;
+    const list = byMod[mod] || [];
+    return byName.get(mod + ':' + n)
+      || list.find((e) => norm(e.name).startsWith(n) || n.startsWith(norm(e.name)))
+      || list.find((e) => norm(e.desc).includes(n) && n.length > 3) || null;
+  };
+  return { byCode, byMod, find, norm };
 })();
+
+const SYN = { mid: 'middle', mids: 'middle', lvl: 'level', vol: 'volume', drive: 'gain', dist: 'gain', fdbk: 'feedback', fb: 'feedback', fbk: 'feedback', pres: 'presence', thr: 'threshold', thresh: 'threshold', predelay: 'predelay', dly: 'time', delay: 'time', delaytime: 'time', speed: 'rate', intensity: 'depth', level: 'volume', output: 'volume', mix: 'mix', decaytime: 'decay', reverbtime: 'decay' };
+
+/** Bangun isi modul dari model + parameter (nama bebas dari AI) → nilai per nama knob asli. */
+function buildModule(modId, src) {
+  const fx = src.code != null ? FX.byCode.get(src.code) : FX.find(modId, src.model);
+  const out = { on: !!src.on, code: fx ? fx.code : null, model: fx ? fx.name : (src.model || ''), ref: src.ref || (fx ? fx.desc : ''), params: {} };
+  if (!fx) { Object.assign(out.params, src.params || {}); return out; }
+  const given = {};
+  for (const [k, v] of Object.entries(src.params || {})) { const nk = FX.norm(k); given[nk] = v; if (SYN[nk]) given[FX.norm(SYN[nk])] ??= v; }
+  for (const p of fx.params) {
+    const key = FX.norm(p.n);
+    let v = given[key];
+    if (v === undefined && p.t === 'k' && /time/.test(key)) v = given.time;
+    if (p.t === 'k') { const num = Number(v); out.params[p.n] = isFinite(num) && v !== '' && v != null ? clamp(num, p.min, p.max) : p.d; }
+    else {
+      let val = p.d;
+      if (v != null) { const o = p.opts.find((o) => FX.norm(o.n) === FX.norm(v) || o.v === Number(v)); if (o) val = o.v; else if (v === true || /^(on|ya|true)$/i.test(v)) val = (p.opts.find((o) => /on/i.test(o.n)) || {}).v ?? val; }
+      out.params[p.n] = val;
+    }
+  }
+  return out;
+}
+function emptyRecipe(name) {
+  return { type: 'recipe', id: uid(), created: Date.now(), name: name || 'Patch baru', song: '', bpm: '', patchVolume: '', notes: '', namIr: {},
+    modules: Object.fromEntries(MODULES.map((m) => [m.id, { on: false, code: null, model: '', ref: '', params: {} }])) };
+}
+/** Migrasi resep lama/asing → bentuk sekarang. */
+function fixRecipe(r) {
+  const base = emptyRecipe(r.name);
+  const out = { ...base, ...r, type: 'recipe', modules: {} };
+  for (const m of MODULES) {
+    const src = (r.modules || {})[m.id] || base.modules[m.id];
+    out.modules[m.id] = (src.code != null || src.model) ? buildModule(m.id, src) : { ...base.modules[m.id], on: !!src.on };
+  }
+  return out;
+}
+
+// ─── Patch kerja (rancangan yang sedang disetel) ─────────────────────────────
+const WP = {
+  cur: null,
+  load() {
+    try { const r = JSON.parse(localStorage.getItem('rigsaku:wp') || 'null'); this.cur = r ? fixRecipe(r) : emptyRecipe(); }
+    catch { this.cur = emptyRecipe(); }
+  },
+  save() { try { localStorage.setItem('rigsaku:wp', JSON.stringify(this.cur)); } catch {} },
+  set(recipe, announce) {
+    this.cur = fixRecipe(JSON.parse(JSON.stringify(recipe)));
+    this.cur.id = uid(); this.save(); this.paint();
+    if (announce) toast(`"${this.cur.name}" dimuat ke Patch Kerja`);
+  },
+  paint() {
+    const c = this.cur;
+    $('#wpName').textContent = c.name || 'Patch baru';
+    const on = MODULES.filter((m) => c.modules[m.id].on).length;
+    $('#wpSub').textContent = [c.song, c.bpm && `${c.bpm} BPM`, `${on} modul aktif`].filter(Boolean).join(' · ');
+    const chain = $('#wpChain'); chain.innerHTML = '';
+    chain.append(...AI.chain(c.modules).childNodes);
+    $('#edName').value = c.name || ''; $('#edSong').value = c.song || '';
+    $('#edBpm').value = c.bpm || ''; $('#edVol').value = c.patchVolume ?? ''; $('#edNotes').value = c.notes || '';
+    const ni = c.namIr || {};
+    $('#edToneHint').textContent = [ni.advice, ni.tone3000_query && `Kata kunci: ${ni.tone3000_query}`].filter(Boolean).join('\n') || '—';
+    Control.paintMods();
+  },
+  sendOnOff(r = this.cur) {
+    if (!Midi.connected) { toast('Sambungkan GP-100 dulu'); return false; }
+    let ok = true;
+    for (const m of MODULES) ok = Control.setMod(m.id, !!r.modules[m.id].on, true) && ok;
+    if (r.patchVolume !== '' && r.patchVolume != null) Midi.cc(CC.patchVolume, clamp(+r.patchVolume, 0, 100));
+    if (r.bpm) { Control.setBpm(+r.bpm); Control.sendBpm(); }
+    toast(ok ? 'On/off modul terkirim ke patch aktif di pedal' : 'Sebagian perintah gagal terkirim');
+    return ok;
+  },
+  text(p = this.cur) {
+    const lines = [`${p.name}${p.song ? ' — ' + p.song : ''}`];
+    if (p.bpm) lines.push(`BPM ${p.bpm}`);
+    if (p.patchVolume !== '' && p.patchVolume != null) lines.push(`Patch volume ${p.patchVolume}`);
+    lines.push('');
+    for (const m of MODULES) {
+      const d = p.modules[m.id];
+      if (!d.on) continue;
+      const fx = d.code != null ? FX.byCode.get(d.code) : null;
+      const ps = Object.entries(d.params).map(([k, v]) => {
+        const pd = fx && fx.params.find((x) => x.n === k);
+        return `${k} ${pd && pd.opts ? (pd.opts.find((o) => o.v === v) || {}).n || v : v}`;
+      }).join(', ');
+      lines.push(`${m.id}: ${d.model || '?'}${d.ref ? ' (' + d.ref + ')' : ''}${ps ? ' — ' + ps : ''}`);
+    }
+    const off = MODULES.filter((m) => !p.modules[m.id].on).map((m) => m.id);
+    if (off.length) lines.push(`Mati: ${off.join(', ')}`);
+    if (p.notes) lines.push('', p.notes);
+    lines.push('', 'Dibuat dengan Rig Saku untuk Valeton GP-100');
+    return lines.join('\n');
+  },
+  init() {
+    this.load();
+    const bind = (id, key, num) => $('#' + id).addEventListener('change', (e) => {
+      const v = e.target.value; this.cur[key] = num ? (v === '' ? '' : +v) : v; this.save(); this.paint();
+    });
+    bind('edName', 'name'); bind('edSong', 'song'); bind('edBpm', 'bpm', true); bind('edVol', 'patchVolume', true); bind('edNotes', 'notes');
+    $('#btnWpGuide').addEventListener('click', () => Guide.open(this.cur));
+    $('#btnWpSend').addEventListener('click', () => this.sendOnOff());
+    $('#btnWpSave').addEventListener('click', async () => {
+      const r = JSON.parse(JSON.stringify(this.cur)); r.id = uid(); r.created = Date.now();
+      try { await DB.put('presets', r); toast(`"${r.name}" disimpan ke pustaka`); Library.render(); } catch (e) { toast('Gagal menyimpan: ' + e.message); }
+    });
+    $('#btnWpNew').addEventListener('click', () => { this.cur = emptyRecipe(); this.save(); this.paint(); toast('Patch Kerja dikosongkan'); });
+    $('#btnEdShare').addEventListener('click', () => shareText(this.text(), this.cur.name));
+    $('#btnEdT3k').addEventListener('click', () => { const q = this.cur?.namIr?.tone3000_query; if (q) copyText(q); T3K.start('nam'); });
+    this.paint();
+  },
+};
+
+// ─── Komponen knob putar ─────────────────────────────────────────────────────
+function knob(p, value, onChange, hue) {
+  const range = p.max - p.min || 1;
+  const dec = String(p.step).includes('.') ? String(p.step).split('.')[1].length : 0;
+  let v = value;
+  const R = 34, C = 42, A0 = 135, SW = 270;
+  const pt = (deg, r) => { const a = deg * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; };
+  const arc = (from, to, r) => { const [x1, y1] = pt(from, r), [x2, y2] = pt(to, r); return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`; };
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 84 84');
+  const mk = (tag, at) => { const e = document.createElementNS(svgNS, tag); for (const [k, x] of Object.entries(at)) e.setAttribute(k, x); svg.append(e); return e; };
+  mk('path', { d: arc(A0, A0 + SW, R), fill: 'none', stroke: 'var(--line)', 'stroke-width': 7, 'stroke-linecap': 'round' });
+  const val = mk('path', { d: '', fill: 'none', stroke: hue || 'var(--accent)', 'stroke-width': 7, 'stroke-linecap': 'round' });
+  mk('circle', { cx: C, cy: C, r: 22, fill: 'var(--raised)', stroke: 'var(--line)', 'stroke-width': 1 });
+  const tick = mk('line', { x1: C, y1: C, x2: C, y2: C, stroke: 'var(--fg)', 'stroke-width': 3, 'stroke-linecap': 'round' });
+  const num = h('div', { class: 'val' });
+  const dial = h('div', { class: 'dial', role: 'slider', tabindex: 0, 'aria-label': p.n, 'aria-valuemin': p.min, 'aria-valuemax': p.max }, svg, num);
+  const wrap = h('div', { class: 'knob' }, dial, h('div', { class: 'nm', text: p.n }),
+    h('div', { class: 'steps' }, h('button', { 'aria-label': `Kurangi ${p.n}`, text: '−', onclick: () => set(v - p.step * (range > 200 ? 10 : 1)) }), h('button', { 'aria-label': `Tambah ${p.n}`, text: '+', onclick: () => set(v + p.step * (range > 200 ? 10 : 1)) })));
+  const paint = () => {
+    const f = (v - p.min) / range, deg = A0 + SW * f;
+    val.setAttribute('d', f > 0.001 ? arc(A0, deg, R) : '');
+    const [x1, y1] = pt(deg, 24.5), [x2, y2] = pt(deg, 29.5);
+    tick.setAttribute('x1', x1); tick.setAttribute('y1', y1); tick.setAttribute('x2', x2); tick.setAttribute('y2', y2);
+    num.textContent = (+v).toFixed(dec);
+    dial.setAttribute('aria-valuenow', v);
+    wrap.classList.toggle('changed', v !== p.d);
+  };
+  const set = (nv, quiet) => {
+    nv = clamp(Math.round(nv / p.step) * p.step, p.min, p.max); nv = +nv.toFixed(dec);
+    if (nv === v) return; v = nv; paint(); if (!quiet) onChange(v);
+  };
+  let sy = 0, sv = 0, drag = false, lastTap = 0;
+  dial.addEventListener('pointerdown', (e) => { drag = true; sy = e.clientY; sv = v; dial.setPointerCapture(e.pointerId); e.preventDefault(); });
+  dial.addEventListener('pointermove', (e) => { if (!drag) return; set(sv + (sy - e.clientY) / 180 * range); });
+  const end = (e) => {
+    if (!drag) return; drag = false;
+    if (Math.abs(e.clientY - sy) < 4) { const now = Date.now(); if (now - lastTap < 320) set(p.d); lastTap = now; }
+  };
+  dial.addEventListener('pointerup', end); dial.addEventListener('pointercancel', end);
+  dial.addEventListener('keydown', (e) => { if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { set(v + p.step); e.preventDefault(); } if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { set(v - p.step); e.preventDefault(); } });
+  paint();
+  return wrap;
+}
+
+// ─── Lembar edit modul ───────────────────────────────────────────────────────
+const MSheet = {
+  rec: null, mod: null, onSave: null,
+  open(rec, modId, onSave) {
+    this.rec = rec; this.mod = modId; this.onSave = onSave;
+    const m = MODULES.find((x) => x.id === modId);
+    const box = $('#msheetBox'); box.style.setProperty('--hue', m.hue);
+    $('#msBadge').textContent = m.id; $('#msTitle').textContent = m.desc;
+    $('#msPower').checked = !!rec.modules[modId].on;
+    $('#msLive').textContent = Midi.connected ? 'on/off langsung ke pedal' : 'pedal belum tersambung';
+    $('#msPick').hidden = true; $('#msSearch').value = '';
+    this.paint();
+    $('#msheet').hidden = false;
+  },
+  get md() { return this.rec.modules[this.mod]; },
+  commit() { if (this.onSave) this.onSave(); },
+  paint() {
+    const md = this.md, fx = md.code != null ? FX.byCode.get(md.code) : null;
+    $('#msModel').textContent = md.model || 'Pilih model';
+    $('#msModelDesc').textContent = fx ? (fx.desc || 'model Valeton') : (md.model ? 'model tidak dikenali, pilih dari daftar' : 'ketuk untuk memilih');
+    const kb = $('#msKnobs'), opts = $('#msOpts'); kb.innerHTML = ''; opts.innerHTML = '';
+    const hue = MODULES.find((x) => x.id === this.mod).hue;
+    if (!fx) { kb.append(h('div', { class: 'empty', style: { gridColumn: '1 / -1' }, text: 'Pilih model dulu untuk melihat knob-nya.' })); $('#msReset').hidden = true; return; }
+    $('#msReset').hidden = false;
+    for (const p of fx.params) {
+      if (p.t === 'k') kb.append(knob(p, md.params[p.n] ?? p.d, (v) => { md.params[p.n] = v; this.commit(); }, hue));
+      else if (p.opts.length <= 4) {
+        const seg = h('div', { class: 'seg' }, p.opts.map((o) => h('button', { class: (md.params[p.n] ?? p.d) === o.v ? 'sel' : '', text: o.n, onclick: (e) => { md.params[p.n] = o.v; $$('button', seg).forEach((b) => b.classList.toggle('sel', b === e.currentTarget)); this.commit(); } })));
+        opts.append(h('div', { class: 'optrow' }, h('span', { text: p.n }), seg));
+      } else {
+        const sel = h('select', { class: 'input', style: { maxWidth: '240px' }, onchange: (e) => { md.params[p.n] = +e.target.value; this.commit(); } }, p.opts.map((o) => h('option', { value: o.v, text: o.n, selected: (md.params[p.n] ?? p.d) === o.v })));
+        opts.append(h('div', { class: 'optrow' }, h('span', { text: p.n }), sel));
+      }
+    }
+    if (!fx.params.length) kb.append(h('div', { class: 'empty', style: { gridColumn: '1 / -1' }, text: 'Model ini tidak punya knob yang bisa disetel.' }));
+  },
+  list() {
+    const q = FX.norm($('#msSearch').value);
+    const box = $('#msList'); box.innerHTML = '';
+    const items = (FX.byMod[this.mod] || []).filter((e) => !q || FX.norm(e.name).includes(q) || FX.norm(e.desc).includes(q));
+    if (!q && this.md.model) box.append(h('button', { onclick: () => { Object.assign(this.md, { code: null, model: '', ref: '', params: {} }); $('#msPick').hidden = true; this.paint(); this.commit(); } }, h('b', { text: '— Kosongkan model' })));
+    for (const e of items) {
+      box.append(h('button', { class: e.code === this.md.code ? 'sel' : '', onclick: () => {
+        const nm = buildModule(this.mod, { on: this.md.on, code: e.code, params: {} });
+        Object.assign(this.md, nm); $('#msPick').hidden = true; this.paint(); this.commit();
+      } }, h('b', { text: e.name }), e.desc ? h('small', { text: e.desc }) : null));
+    }
+    if (!items.length) box.append(h('div', { class: 'empty', text: 'Tidak ada yang cocok.' }));
+  },
+  close() { $('#msheet').hidden = true; this.commit(); },
+  init() {
+    $('#msheet').addEventListener('click', (e) => { if (e.target.id === 'msheet' || e.target.hasAttribute('data-close')) this.close(); });
+    $('#msModelBtn').addEventListener('click', () => { const p = $('#msPick'); p.hidden = !p.hidden; if (!p.hidden) { this.list(); $('#msSearch').focus(); } });
+    $('#msSearch').addEventListener('input', () => this.list());
+    $('#msPower').addEventListener('change', (e) => {
+      const on = e.target.checked; this.md.on = on;
+      if (Midi.connected) Control.setMod(this.mod, on, true);
+      this.commit();
+    });
+    $('#msReset').addEventListener('click', () => { const md = this.md; Object.assign(md, buildModule(this.mod, { on: md.on, code: md.code, params: {} })); this.paint(); this.commit(); });
+  },
+};
+
+// ─── Panduan setel di pedal (langkah demi langkah) ───────────────────────────
+const Guide = {
+  steps: [], i: 0, rec: null, lock: null,
+  async open(rec) {
+    this.rec = rec; this.i = 0;
+    const on = MODULES.filter((m) => rec.modules[m.id].on);
+    this.steps = [{ kind: 'start' }, ...on.map((m) => ({ kind: 'mod', m })), { kind: 'save' }];
+    $('#gTitle').textContent = rec.name || 'Panduan Setel';
+    $('#guide').hidden = false; this.paint();
+    try { this.lock = await navigator.wakeLock?.request('screen'); } catch {}
+  },
+  close() { $('#guide').hidden = true; try { this.lock && this.lock.release(); } catch {} this.lock = null; },
+  paint() {
+    const s = this.steps[this.i], box = $('#gStep'); box.innerHTML = '';
+    $('#gDots').innerHTML = ''; this.steps.forEach((_, k) => $('#gDots').append(h('i', { class: k === this.i ? 'cur' : '' })));
+    $('#gPrev').disabled = this.i === 0;
+    $('#gNext').textContent = this.i === this.steps.length - 1 ? 'Selesai ✓' : 'Lanjut ▶';
+    if (s.kind === 'start') {
+      const off = MODULES.filter((m) => !this.rec.modules[m.id].on).map((m) => m.id);
+      box.append(h('div', { class: 'big', text: 'Siapkan patch' }),
+        h('p', { text: 'Di pedal, pilih slot patch yang mau diisi (sebaiknya slot kosong / yang boleh ditimpa).' }),
+        h('p', { class: 'note', text: `Tekan tombol di bawah untuk menyalakan ${MODULES.length - off.length} modul dan mematikan ${off.length} modul secara otomatis.` }),
+        h('button', { class: 'btn primary', text: 'Kirim on/off ke pedal', onclick: () => WP.sendOnOff(this.rec) }),
+        this.rec.bpm ? h('p', { class: 'note', text: `BPM lagu: ${this.rec.bpm} (ikut terkirim).` }) : null);
+    } else if (s.kind === 'mod') {
+      const d = this.rec.modules[s.m.id];
+      const fx = d.code != null ? FX.byCode.get(d.code) : null;
+      const vals = Object.entries(d.params).map(([k, v]) => {
+        const pd = fx && fx.params.find((x) => x.n === k);
+        const shown = pd && pd.opts ? ((pd.opts.find((o) => o.v === v) || {}).n || v) : v;
+        return h('div', {}, h('small', { text: k }), h('b', { text: shown }));
+      });
+      box.style.setProperty('--hue', s.m.hue);
+      box.append(h('div', { class: 'big', style: { color: s.m.hue }, text: s.m.id }),
+        h('div', { class: 'model', text: d.model || 'Model bebas' }),
+        d.ref ? h('div', { class: 'note', text: 'Meniru: ' + d.ref }) : null,
+        h('p', { class: 'note', text: `Di pedal: buka modul ${s.m.id}, pilih model di atas, lalu putar knob sesuai angka berikut.` }),
+        vals.length ? h('div', { class: 'guide-vals' }, vals) : h('div', { class: 'empty', text: 'Tidak ada nilai knob khusus; pakai bawaan.' }),
+        h('button', { class: 'btn sm', text: `Edit nilai ${s.m.id}`, onclick: () => MSheet.open(this.rec, s.m.id, () => { if (this.rec === WP.cur) { WP.save(); WP.paint(); } this.paint(); }) }));
+    } else {
+      box.append(h('div', { class: 'big', text: 'Simpan di pedal' }),
+        h('p', { text: 'Tekan tombol SAVE di GP-100, pilih slot, lalu konfirmasi. Beri nama patch sesuai keinginan.' }),
+        h('p', { class: 'note', text: `Saran nama: ${String(this.rec.name || '').slice(0, 12)}` }),
+        h('button', { class: 'btn', text: 'Catat nama ini ke nomor patch', onclick: () => { Control.namePatch(this.rec.name); } }));
+    }
+  },
+  init() {
+    $('#gClose').addEventListener('click', () => this.close());
+    $('#gPrev').addEventListener('click', () => { if (this.i > 0) { this.i--; this.paint(); } });
+    $('#gNext').addEventListener('click', () => { if (this.i < this.steps.length - 1) { this.i++; this.paint(); } else this.close(); });
+  },
+};
 
 // ─── Asisten preset AI ───────────────────────────────────────────────────────
 const AI = {
   results: [],
-
   system() {
-    const vocab = MODULES.map((m) => `${m.id}: ${(FX.byMod[m.id] || []).join(', ')}`).join('\n');
-    return `Kamu adalah teknisi tone gitar yang sangat paham multi-efek Valeton GP-100.
-Tugas: rancang preset GP-100 yang meniru sound dari lagu/permintaan pengguna.
+    const vocab = MODULES.filter((m) => m.id !== 'NR').map((m) => `[${m.id}] ` + (FX.byMod[m.id] || [])
+      .filter((e) => !/^snaptone$/i.test(e.name)).map((e) => e.desc && !/simulation|effect$|reverb$|delay$/i.test(e.desc) ? `${e.name} = ${e.desc.replace(/\s*\(.*?\)\s*/g, ' ').trim()}` : e.name).join('; ')).join('\n');
+    return `Kamu teknisi tone gitar yang sangat paham multi-efek Valeton GP-100.
+Tugas: buat 3 preset GP-100 yang meniru sound lagu/permintaan pengguna.
 
-Fakta GP-100:
-- Rantai 9 modul: PRE (compressor, boost, filter), DST (overdrive, distortion, fuzz), AMP (model ampli; juga SnapTone/NAM), NR (noise gate), CAB (kabinet atau IR pengguna), EQ, MOD (chorus, flanger, phaser, tremolo, vibrato, rotary, pitch, wah), DLY (delay), RVB (reverb).
-- Setiap modul bisa on/off. Nilai knob umumnya 0–100; waktu delay dalam ms; tanda tempo boleh ditulis sebagai teks.
-- Kalau tidak ada model yang pas, boleh menyarankan NAM capture atau IR (CAB) dari TONE3000.
+Rantai GP-100 (urutan): PRE (comp/boost/wah/pitch), DST (overdrive/distortion/fuzz), AMP, NR (noise gate), CAB (kabinet/IR), EQ, MOD, DLY, RVB.
 
-Nama model keluarga Valeton (GP-100 memakai sebagian besar nama ini; utamakan nama dari daftar, jangan mengarang):
+Model yang tersedia (nama Valeton = gear asli). WAJIB pakai nama persis dari daftar ini:
 ${vocab}
+[NR] ${(FX.byMod.NR || []).map((e) => e.name).join('; ')}
 
-Aturan:
-- Beri tepat 3 preset dengan pendekatan berbeda (mis. setia ke rekaman studio, versi live, versi ringan/clean-friendly).
-- Isi semua 9 modul. Modul yang mati: "on": false dan "model": "".
-- "ref" = gear asli yang ditiru (mis. "Marshall JCM800", "Ibanez TS808").
-- "params" berisi 2–6 knob terpenting dengan nama knob seperti di pedal (Gain, Bass, Middle, Treble, Presence, Volume, Level, Tone, Mix, Time, Feedback, Rate, Depth, Decay, Threshold, dll.) dan nilai angka.
-- Sesuaikan dengan gitar, keluaran, dan catatan pengguna bila ada.
-- Semua teks dalam Bahasa Indonesia yang ringkas.
-- Jawab HANYA dengan satu objek JSON valid, tanpa teks lain, tanpa blok kode, dengan bentuk:
-{"song":"","artist":"","summary":"1-2 kalimat tentang karakter tone & gear aslinya",
- "presets":[{"name":"maks 12 karakter","style":"","description":"","bpm":120,"patch_volume":60,
-  "modules":{"PRE":{"on":false,"model":"","ref":"","params":{}},"DST":{...},"AMP":{...},"NR":{...},"CAB":{...},"EQ":{...},"MOD":{...},"DLY":{...},"RVB":{...}},
-  "nam_ir":{"advice":"kapan sebaiknya memakai NAM/IR","tone3000_query":"kata kunci pencarian"},
-  "tips":"pickup, posisi volume/tone gitar, teknik main"}]}`;
+Cara kerja:
+1. Ingat dulu gear asli gitaris di rekaman itu (ampli, pedal, efek, era) dan karakter sound tiap bagian.
+2. Petakan ke model Valeton yang paling mirip (lihat padanan gear di atas). Pasangkan AMP dengan CAB yang cocok.
+3. Isi knob dengan angka 0–100 (waktu delay dalam ms bila knob Time). Pakai nama knob umum: Gain, Bass, Middle, Treble, Presence, Volume, Tone, Level, Mix, Time, Feedback, Rate, Depth, Decay, Threshold, Sustain.
+4. Buat 3 versi berbeda: "Setia rekaman", "Versi live", dan satu alternatif (mis. bagian solo atau gain lebih rendah).
+
+Jawab HANYA dengan JSON valid (tanpa penjelasan, tanpa \`\`\`), format ringkas — sertakan HANYA modul yang menyala:
+{"song":"judul","artist":"artis","summary":"1-2 kalimat: gear asli & karakter tone",
+"presets":[{"name":"maks 12 huruf","style":"Setia rekaman","description":"1 kalimat",
+"bpm":120,"patch_volume":60,
+"chain":[{"m":"AMP","model":"UK 800","ref":"Marshall JCM800","params":{"Gain":60,"Bass":45,"Middle":70,"Treble":60}}],
+"nam_ir":{"advice":"singkat","tone3000_query":"kata kunci"},
+"tips":"pickup, volume gitar, teknik"}]}
+Semua teks Bahasa Indonesia.`;
   },
   userMsg() {
     const song = $('#aiSong').value.trim();
@@ -2069,16 +2567,19 @@ Aturan:
     if (busy) el.append(h('span', { class: 'spin', style: { width: '13px', height: '13px', verticalAlign: '-2px' } }), ' ');
     el.append(msg || '');
   },
-  modeLabel() { $('#aiModeLabel').textContent = S.aiKey ? 'via API key' : 'mode salin-tempel'; },
+  modeLabel() {
+    $('#aiModeLabel').textContent = S.aiKey ? 'langsung via API key' : 'gratis lewat aplikasi Claude';
+    $('#btnAiAsk').textContent = S.aiKey ? 'Buat 3 pilihan preset' : 'Tanya Claude (gratis)';
+  },
 
   async ask() {
     if (!this.check()) return;
-    if (!S.aiKey) { this.copyPrompt(); return; }
+    if (!S.aiKey) return this.viaClaude();
     const btn = $('#btnAiAsk'); btn.disabled = true;
     this.status('AI sedang meracik preset… (10–40 detik)', true);
-    const body = { model: S.aiModel, max_tokens: 8000, system: this.system(), messages: [{ role: 'user', content: this.userMsg() }] };
+    const body = { model: S.aiModel, max_tokens: 6000, system: this.system(), messages: [{ role: 'user', content: this.userMsg() }] };
     if (S.aiWeb === '1') body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
-    const call = async (b) => fetch('https://api.anthropic.com/v1/messages', {
+    const call = (b) => fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-api-key': S.aiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify(b),
@@ -2093,151 +2594,97 @@ Aturan:
       }
       const j = await r.json();
       const text = (j.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
-      this.take(text);
+      if (!this.take(text) && j.stop_reason === 'max_tokens') toast('Jawaban AI terpotong; coba lagi', 5000);
     } catch (e) {
       this.status(''); toast('AI gagal: ' + (e.message === 'Failed to fetch' ? 'tidak ada koneksi' : e.message), 6000);
     } finally { btn.disabled = false; }
   },
 
-  copyPrompt() {
-    if (!this.check()) return;
-    const full = `${this.system()}\n\n---\n${this.userMsg()}`;
-    copyText(full);
-    $('#aiPasteBox').hidden = false;
-    this.status('Prompt disalin. Buka aplikasi Claude, tempel, kirim, lalu salin seluruh jawabannya dan tempel di kotak bawah.');
+  prompt() { return `${this.system()}\n\n---\n${this.userMsg()}`; },
+  async viaClaude() {
+    await copyText(this.prompt());
+    $('#aiSteps').hidden = false;
+    this.status('Prompt disalin. Ikuti 4 langkah di atas.');
+    window.open('https://claude.ai/new', '_blank', 'noopener');
+  },
+  async pasteFromClipboard() {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (t && t.includes('{') && /preset/i.test(t)) { this.take(t); return; }
+      toast('Clipboard belum berisi jawaban Claude. Salin jawabannya dulu, atau tempel manual di kotak.', 5000);
+    } catch { toast('Tempel manual di kotak di bawah'); }
+    $('#aiPasteBox').hidden = false; $('#aiPasteText').focus();
   },
 
+  /** Ambil objek JSON berisi "presets" dari teks bebas (toleran terhadap ```json, koma ekstra, kutip miring). */
+  extract(text) {
+    let t = String(text).replace(/```(?:json)?/gi, '').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+    const tries = [];
+    const i = t.indexOf('{'), j = t.lastIndexOf('}');
+    if (i >= 0 && j > i) tries.push(t.slice(i, j + 1));
+    const k = t.search(/\{\s*"(song|presets|summary)"/);
+    if (k >= 0) tries.push(t.slice(k, j + 1));
+    for (const s of tries) {
+      for (const cand of [s, s.replace(/,\s*([}\]])/g, '$1')]) { try { const o = JSON.parse(cand); if (o && (o.presets || o.chain || o.modules)) return o; } catch {} }
+    }
+    return null;
+  },
   take(text) {
-    let data;
-    try {
-      const s = text.indexOf('{'), e = text.lastIndexOf('}');
-      data = JSON.parse(text.slice(s, e + 1));
-    } catch { this.status(''); toast('Jawaban AI tidak bisa dibaca sebagai JSON. Coba lagi.', 5000); return; }
-    const presets = (data.presets || []).map((p) => this.normalize(p, data));
-    if (!presets.length) { toast('Tidak ada preset di jawaban'); return; }
+    const data = this.extract(text);
+    if (!data) { this.status(''); toast('Jawaban tidak terbaca. Pastikan seluruh jawaban Claude ikut disalin.', 6000); $('#aiPasteBox').hidden = false; return false; }
+    const raw = data.presets || [data];
+    const presets = raw.map((p) => this.normalize(p, data)).filter(Boolean);
+    if (!presets.length) { toast('Tidak ada preset di jawaban'); return false; }
     this.results = presets;
     this.status(data.summary || '');
+    $('#aiSteps').hidden = true; $('#aiPasteBox').hidden = true; $('#aiPasteText').value = '';
     this.renderResults();
+    $('#aiResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return true;
   },
-
   normalize(p, data) {
-    const mods = {};
-    for (const m of MODULES) {
-      const src = (p.modules || {})[m.id] || {};
-      const params = {};
-      for (const [k, v] of Object.entries(src.params || {})) params[k] = typeof v === 'number' ? v : (isNaN(+v) ? String(v) : +v);
-      mods[m.id] = { on: !!src.on, model: src.model || '', ref: src.ref || '', params };
+    const r = emptyRecipe();
+    const chain = Array.isArray(p.chain) ? p.chain : Object.entries(p.modules || {}).map(([m, v]) => ({ m, ...v }));
+    for (const c of chain) {
+      const id = String(c.m || c.module || '').toUpperCase().replace('DELAY', 'DLY').replace('REVERB', 'RVB');
+      if (!r.modules[id]) continue;
+      r.modules[id] = buildModule(id, { on: c.on !== false, model: c.model, ref: c.ref, params: c.params || {} });
     }
-    return {
-      type: 'recipe', id: uid(), created: Date.now(),
-      name: String(p.name || 'Preset').slice(0, 24), style: p.style || '', description: p.description || '',
+    return Object.assign(r, {
+      name: String(p.name || 'Preset AI').slice(0, 24), style: p.style || '', description: p.description || '',
       song: [data.song, data.artist].filter(Boolean).join(' – ') || $('#aiSong').value.trim(),
       bpm: +p.bpm || '', patchVolume: p.patch_volume != null ? +p.patch_volume : '',
-      notes: [p.description, p.tips].filter(Boolean).join('\n\n'),
-      modules: mods, namIr: p.nam_ir || {},
-    };
+      notes: [p.description, p.tips].filter(Boolean).join('\n\n'), namIr: p.nam_ir || {},
+    });
   },
-
   chain(mods) {
-    return h('div', { class: 'chain' }, MODULES.map((m) => h('span', { class: 'c' + (mods[m.id].on ? ' on' : ''), style: { '--hue': m.hue }, title: mods[m.id].model || 'mati', text: mods[m.id].on && mods[m.id].model ? `${m.id} · ${mods[m.id].model}` : m.id })));
+    return h('div', { class: 'chain' }, MODULES.map((m) => {
+      const d = mods[m.id];
+      return h('span', { class: 'c' + (d.on ? ' on' : ''), style: { '--hue': m.hue }, title: d.ref || d.model || 'mati', text: d.on && d.model ? `${m.id} · ${d.model}` : m.id });
+    }));
   },
-
   renderResults() {
     const box = $('#aiResults'); box.innerHTML = '';
-    this.results.forEach((p) => box.append(h('div', { class: 'recipe' },
-      h('div', {}, h('h3', { text: p.name }), p.style ? h('small', { class: 'note', text: p.style }) : null),
-      p.description ? h('p', { text: p.description }) : null,
-      this.chain(p.modules),
-      h('div', { class: 'row' },
-        h('button', { class: 'btn sm primary', text: 'Pilih & edit', onclick: () => Editor.open(p) }),
-        h('button', { class: 'btn sm', text: 'Kirim on/off', onclick: () => Editor.send(p) }),
-        h('button', { class: 'btn sm ghost', text: 'Simpan', onclick: async () => { await DB.put('presets', { ...p, created: Date.now() }); Library.render(); toast('Disimpan ke pustaka'); } })))));
+    this.results.forEach((p) => {
+      const unknown = MODULES.filter((m) => p.modules[m.id].on && p.modules[m.id].model && p.modules[m.id].code == null).map((m) => m.id);
+      box.append(h('div', { class: 'recipe' },
+        h('div', {}, h('h3', { text: p.name }), p.style ? h('small', { class: 'note', text: p.style }) : null),
+        p.description ? h('p', { text: p.description }) : null,
+        AI.chain(p.modules),
+        unknown.length ? h('p', { class: 'note', style: { color: 'var(--warn)' }, text: `Model di ${unknown.join(', ')} tidak dikenali; pilih manual setelah dimuat.` }) : null,
+        h('div', { class: 'row' },
+          h('button', { class: 'btn sm primary', text: 'Pakai & edit', onclick: () => { WP.set(p, true); Tabs.show('kontrol'); setTimeout(() => $('#wpName').scrollIntoView({ behavior: 'smooth', block: 'center' }), 80); } }),
+          h('button', { class: 'btn sm', text: 'Panduan setel', onclick: () => Guide.open(fixRecipe(p)) }),
+          h('button', { class: 'btn sm ghost', text: 'Simpan', onclick: async () => { await DB.put('presets', { ...p, id: uid(), created: Date.now() }); Library.render(); toast('Disimpan ke pustaka'); } }))));
+    });
   },
-
   init() {
     $('#aiGuitar').value = S.aiGuitar || ''; $('#aiOutput').value = S.aiOutput || 'headphone';
     $('#btnAiAsk').addEventListener('click', () => this.ask());
-    $('#btnAiCopy').addEventListener('click', () => this.copyPrompt());
-    $('#btnAiPaste').addEventListener('click', () => { $('#aiPasteBox').hidden = !$('#aiPasteBox').hidden; });
+    $('#btnAiCopy').addEventListener('click', () => { if (this.check()) { copyText(this.prompt()); $('#aiPasteBox').hidden = false; } });
+    $('#btnAiPaste').addEventListener('click', () => this.pasteFromClipboard());
     $('#btnAiParse').addEventListener('click', () => { const t = $('#aiPasteText').value; if (t.trim()) this.take(t); });
     this.modeLabel();
-  },
-};
-
-// ─── Editor resep preset ─────────────────────────────────────────────────────
-const Editor = {
-  cur: null,
-  open(p) {
-    this.cur = JSON.parse(JSON.stringify(p));
-    $('#editorCard').hidden = false;
-    $('#edName').value = this.cur.name; $('#edSong').value = this.cur.song || '';
-    $('#edBpm').value = this.cur.bpm || ''; $('#edVol').value = this.cur.patchVolume ?? '';
-    $('#edNotes').value = this.cur.notes || '';
-    const ni = this.cur.namIr || {};
-    $('#edToneHint').textContent = [ni.advice, ni.tone3000_query && `Kata kunci: ${ni.tone3000_query}`].filter(Boolean).join('\n') || '—';
-    this.renderMods();
-    $('#editorCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  },
-  renderMods() {
-    const box = $('#edMods'); box.innerHTML = '';
-    for (const m of MODULES) {
-      const md = this.cur.modules[m.id];
-      const listId = 'dl-' + m.id;
-      const sw = h('label', { class: 'switch', title: 'on/off' }, h('input', { type: 'checkbox', checked: md.on, onchange: (e) => { md.on = e.target.checked; } }), h('i'));
-      const params = h('div', { class: 'params' });
-      const paintParams = () => {
-        params.innerHTML = '';
-        for (const [k, v] of Object.entries(md.params)) {
-          const kIn = h('input', { class: 'k', value: k, 'aria-label': 'Nama knob' });
-          const vIn = h('input', { class: 'v', value: v, inputmode: 'decimal', 'aria-label': 'Nilai' });
-          kIn.addEventListener('change', () => { const nk = kIn.value.trim(); if (!nk || nk === k) return; const val = md.params[k]; delete md.params[k]; md.params[nk] = val; paintParams(); });
-          vIn.addEventListener('change', () => { md.params[kIn.value.trim() || k] = isNaN(+vIn.value) ? vIn.value : +vIn.value; });
-          params.append(h('div', { class: 'param' }, kIn, vIn, h('button', { 'aria-label': 'Hapus knob', text: '×', onclick: () => { delete md.params[k]; paintParams(); } })));
-        }
-        params.append(h('button', { class: 'btn sm ghost', text: '+ knob', onclick: () => { let n = 'Knob', i = 1; while (md.params[n]) n = 'Knob ' + (++i); md.params[n] = 50; paintParams(); } }));
-      };
-      paintParams();
-      box.append(h('div', { class: 'modrow' },
-        h('div', { class: 'modrow-h' }, h('b', { text: m.id, style: { color: m.hue } }), sw,
-          h('input', { class: 'input grow', list: listId, value: md.model, placeholder: 'model', 'aria-label': `Model ${m.id}`, oninput: (e) => { md.model = e.target.value; } })),
-        h('datalist', { id: listId }, (FX.byMod[m.id] || []).map((n) => h('option', { value: n }))),
-        h('input', { class: 'input', value: md.ref, placeholder: 'meniru gear asli…', 'aria-label': `Referensi ${m.id}`, style: { minHeight: '36px', fontSize: '13px' }, oninput: (e) => { md.ref = e.target.value; } }),
-        params));
-    }
-  },
-  collect() {
-    const c = this.cur; if (!c) return null;
-    c.name = $('#edName').value.trim() || c.name; c.song = $('#edSong').value.trim();
-    c.bpm = +$('#edBpm').value || ''; c.patchVolume = $('#edVol').value === '' ? '' : +$('#edVol').value;
-    c.notes = $('#edNotes').value;
-    return c;
-  },
-  send(p) {
-    if (!Midi.connected) { toast('Sambungkan GP-100 dulu (tab Kontrol)'); return; }
-    let ok = true;
-    for (const m of MODULES) ok = Control.setMod(m.id, !!p.modules[m.id].on) && ok;
-    if (p.patchVolume !== '' && p.patchVolume != null) Midi.cc(CC.patchVolume, clamp(+p.patchVolume, 0, 100));
-    if (p.bpm) { Control.setBpm(+p.bpm); Control.sendBpm(); }
-    toast(ok ? 'On/off modul terkirim ke patch aktif' : 'Sebagian perintah gagal terkirim');
-  },
-  text(p) {
-    const lines = [`${p.name}${p.song ? ' — ' + p.song : ''}`, p.bpm ? `BPM ${p.bpm}` : '', p.patchVolume !== '' ? `Patch volume ${p.patchVolume}` : '', ''];
-    for (const m of MODULES) {
-      const d = p.modules[m.id];
-      if (!d.on) { lines.push(`${m.id}: mati`); continue; }
-      const ps = Object.entries(d.params).map(([k, v]) => `${k} ${v}`).join(', ');
-      lines.push(`${m.id}: ${d.model || '?'}${d.ref ? ' (' + d.ref + ')' : ''}${ps ? ' — ' + ps : ''}`);
-    }
-    if (p.notes) lines.push('', p.notes);
-    lines.push('', 'Dibuat dengan Rig Saku untuk Valeton GP-100');
-    return lines.filter((l, i, a) => !(l === '' && a[i - 1] === '')).join('\n');
-  },
-  init() {
-    $('#btnEditorClose').addEventListener('click', () => { $('#editorCard').hidden = true; this.cur = null; });
-    $('#btnEdSend').addEventListener('click', () => { const c = this.collect(); if (c) this.send(c); });
-    $('#btnEdSave').addEventListener('click', async () => { const c = this.collect(); if (!c) return; c.type = 'recipe'; c.created = c.created || Date.now(); await DB.put('presets', c); Library.render(); toast('Preset disimpan'); });
-    $('#btnEdShare').addEventListener('click', () => { const c = this.collect(); if (c) shareText(this.text(c), c.name); });
-    $('#btnEdT3k').addEventListener('click', () => { const c = this.collect(); const q = c?.namIr?.tone3000_query; if (q) copyText(q); T3K.start('nam'); });
   },
 };
 
@@ -2247,8 +2694,8 @@ const Library = {
     let items = [];
     try { items = await DB.all('presets'); } catch {}
     const list = $('#presetList'); list.innerHTML = '';
-    if (!items.length) list.append(h('div', { class: 'empty', text: 'Belum ada preset. Minta AI membuatkan, atau impor file .prst dari Valeton Suite.' }));
-    for (const p of items) list.append(p.type === 'prst' ? this.prstItem(p) : this.recipeItem(p));
+    if (!items.length) list.append(h('div', { class: 'empty', text: 'Belum ada preset. Minta AI membuatkan, simpan Patch Kerja, atau impor file .prst dari Valeton Suite.' }));
+    for (const p of items) list.append(p.type === 'prst' ? this.prstItem(p) : this.recipeItem(fixRecipe(p)));
   },
   confirmRow(id) {
     const row = h('div', { class: 'row', hidden: true },
@@ -2260,14 +2707,14 @@ const Library = {
   recipeItem(p) {
     const cr = this.confirmRow(p.id);
     return h('div', { class: 'item' },
-      h('div', { class: 'item-h' }, h('span', { class: 'tag', text: 'AI' }),
+      h('div', { class: 'item-h' }, h('span', { class: 'tag', text: 'RESEP' }),
         h('div', { class: 't' }, h('b', { text: p.name }), h('small', { text: [p.song, p.bpm && `${p.bpm} BPM`, fmtDate(p.created)].filter(Boolean).join(' · ') }))),
       AI.chain(p.modules),
       h('div', { class: 'row' },
-        h('button', { class: 'btn sm primary', text: 'Edit', onclick: () => Editor.open(p) }),
-        h('button', { class: 'btn sm', text: 'Kirim on/off', onclick: () => Editor.send(p) }),
-        h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareText(Editor.text(p), p.name) }),
-        h('button', { class: 'btn sm', text: 'Unduh .json', onclick: () => downloadBlob(new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }), safeName(p.name) + '.rigsaku.json') }),
+        h('button', { class: 'btn sm primary', text: 'Pakai & edit', onclick: () => { WP.set(p, true); Tabs.show('kontrol'); } }),
+        h('button', { class: 'btn sm', text: 'Panduan setel', onclick: () => Guide.open(p) }),
+        h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareText(WP.text(p), p.name) }),
+        h('button', { class: 'btn sm', text: 'Unduh', onclick: () => downloadBlob(new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }), safeName(p.name) + '.rigsaku.json') }),
         h('button', { class: 'btn sm ghost danger', text: 'Hapus', onclick: () => { cr.hidden = false; } })),
       cr);
   },
@@ -2278,6 +2725,11 @@ const Library = {
     const slots = (info.slots || []).map((s) => h('div', { class: 'row nowrap', style: { fontSize: '13px' } },
       h('span', { class: 'tag', text: s.slot != null ? `#${s.slot}` : '•' }),
       h('span', { class: 'grow', style: { minWidth: 0, overflowWrap: 'anywhere' }, text: `${s.name ? s.name + ' (' + s.mod + ')' : 'kode ' + s.code}${s.on === false ? ' · mati' : ''}` })));
+    const asRecipe = () => {
+      const r = emptyRecipe(info.title || p.name);
+      for (const s of info.slots || []) { const fx = FX.byCode.get(s.code); if (fx && r.modules[fx.mod] && !r.modules[fx.mod].model) r.modules[fx.mod] = buildModule(fx.mod, { on: s.on !== false, code: fx.code, params: s.params || {} }); }
+      return r;
+    };
     return h('div', { class: 'item' },
       h('div', { class: 'item-h' }, h('span', { class: 'tag', text: 'PRST' }),
         h('div', { class: 't' }, h('b', { text: info.title || p.name }),
@@ -2285,6 +2737,7 @@ const Library = {
           info.warn ? h('small', { style: { display: 'block', color: 'var(--warn)' }, text: info.warn }) : null)),
       slots.length ? h('div', { class: 'list', style: { gap: '4px' } }, slots, h('p', { class: 'note', text: 'Nama efek diperkirakan dari kode model keluarga Valeton.' })) : null,
       h('div', { class: 'row' },
+        slots.length ? h('button', { class: 'btn sm primary', text: 'Jadikan Patch Kerja', onclick: () => { WP.set(asRecipe(), true); Tabs.show('kontrol'); } }) : null,
         h('button', { class: 'btn sm', text: 'Lihat isi', onclick: () => { detail.hidden = !detail.hidden; if (!detail.hidden && !detail.firstChild) detail.append(h('pre', { class: 'log', style: { height: '260px' }, text: info.preview || '' })); } }),
         h('button', { class: 'btn sm', text: 'Unduh', onclick: () => downloadBlob(p.blob, p.fileName || safeName(p.name) + '.prst') }),
         h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareBlob(p.blob, p.fileName || safeName(p.name) + '.prst', p.name) }),
@@ -2306,16 +2759,16 @@ const Library = {
     const slots = []; let title = '';
     const all = [doc.documentElement, ...doc.documentElement.querySelectorAll('*')];
     for (const el of all) {
-      for (const a of el.attributes) {
-        if (!title && /^(name|patchname|presetname|title)$/i.test(a.name) && a.value.trim()) title = a.value.trim();
-      }
+      for (const a of el.attributes) if (!title && /^(name|patchname|presetname|title)$/i.test(a.name) && a.value.trim()) title = a.value.trim();
       const codeAttr = [...el.attributes].find((a) => /code/i.test(a.name) && /^-?\d+$|^0x[0-9a-f]+$/i.test(a.value.trim()));
       if (codeAttr) {
         const code = Number(codeAttr.value.trim());
         const fx = FX.byCode.get(code);
         const slotA = [...el.attributes].find((a) => /^(x|slot|index|pos)$/i.test(a.name));
         const onA = [...el.attributes].find((a) => /^(active|enable|enabled|on|switch|state)$/i.test(a.name));
-        slots.push({ code, name: fx?.name, mod: fx?.mod, slot: slotA ? +slotA.value : null, on: onA ? !/^(0|false|off)$/i.test(onA.value) : null });
+        const params = {};
+        if (fx) for (const a of el.attributes) { const m = /^params?_?(\d+)$/i.exec(a.name); if (m && fx.params[+m[1]]) params[fx.params[+m[1]].n] = +a.value; }
+        slots.push({ code, name: fx?.name, mod: fx?.mod, slot: slotA ? +slotA.value : null, on: onA ? !/^(0|false|off)$/i.test(onA.value) : null, params });
       }
     }
     if (!title) { const n = doc.querySelector('name, Name, patchName, PatchName'); if (n && n.textContent.trim()) title = n.textContent.trim(); }
@@ -2327,6 +2780,11 @@ const Library = {
       const files = [...e.target.files]; e.target.value = '';
       for (const f of files) {
         try {
+          if (/\.json$/i.test(f.name)) {
+            const r = JSON.parse(await f.text());
+            await DB.put('presets', { ...fixRecipe(r), id: uid(), created: Date.now() });
+            continue;
+          }
           const info = await this.parsePrst(f);
           await DB.put('presets', { type: 'prst', id: uid(), created: Date.now(), name: f.name.replace(/\.(prst|xml)$/i, ''), fileName: f.name, size: f.size, blob: f, info });
         } catch (err) { toast('Gagal impor ' + f.name + ': ' + err.message, 5000); }
@@ -2379,6 +2837,7 @@ const Lab = {
   inMsg(data, port) {
     if (data[0] === 0xF8 || data[0] === 0xFE) return; // clock/active sensing
     const d = [...data];
+    Wizard.feed(d);
     this.push('in', `◀ ${port.name ? '[' + port.name + '] ' : ''}${this.hex(d)}  ${this.describe(d)}`, this.isGp(d), d[0] === 0xF0);
   },
   outMsg(data) { const d = [...data]; this.push('out', `▶ ${this.hex(d)}  ${this.describe(d)}`, this.isGp(d), d[0] === 0xF0); },
@@ -2399,6 +2858,42 @@ const Lab = {
     $('#btnManCc').addEventListener('click', () => Midi.cc(clamp(+$('#manCc').value, 0, 127), clamp(+$('#manVal').value, 0, 127)));
     $('#btnManPc').addEventListener('click', () => Midi.pc(clamp(+$('#manPc').value, 0, 127)));
     this.sys('Rig Saku siap. Tekan "Sambungkan GP-100" di tab Kontrol.');
+  },
+};
+
+
+// ─── Wizard uji sinkron (bahan membongkar protokol penyetelan) ──────────────
+const Wizard = {
+  on: false, start: 0, msgs: [],
+  begin() {
+    if (!Midi.access) { toast('Sambungkan GP-100 dulu di tab Kontrol'); return; }
+    if (!Midi.sysex) toast('Izin SysEx belum diberikan; pesan SysEx mungkin tidak terlihat', 5000);
+    this.on = true; this.start = Date.now(); this.msgs = [];
+    $('#btnWizStart').disabled = true; $('#btnWizStop').disabled = false; $('#btnWizCopy').hidden = true;
+    $('#wizResult').textContent = 'Merekam pesan dari pedal… putar knob di pedal sekarang, lalu ganti patch sekali.';
+    Midi.identity && Midi.sysex && Midi.identity();
+  },
+  feed(d) { if (this.on && this.msgs.length < 4000) this.msgs.push({ t: Date.now() - this.start, d: [...d] }); },
+  finish() {
+    this.on = false;
+    $('#btnWizStart').disabled = false; $('#btnWizStop').disabled = true;
+    const sx = this.msgs.filter((m) => m.d[0] === 0xF0), gp = sx.filter((m) => Lab.isGp(m.d)), other = this.msgs.length - sx.length;
+    const el = $('#wizResult'); el.innerHTML = '';
+    if (gp.length) el.append(h('span', { class: 'result-ok', text: `Pedal mengirim ${gp.length} pesan SysEx GP-100.` }), ' Ini kabar baik: tekan "Salin hasil untuk Claude" lalu kirim ke saya, supaya edit knob dari HP bisa saya aktifkan.');
+    else if (sx.length) el.append(h('span', { class: 'result-ok', text: `Ada ${sx.length} pesan SysEx (bukan format GP-100 yang dikenal).` }), ' Tetap salin dan kirim hasilnya ke saya.');
+    else el.append(h('span', { class: 'result-no', text: 'Pedal tidak mengirim pesan apa pun saat knob diputar.' }), ` (${other} pesan lain.) Artinya penyetelan dari HP perlu rekaman lalu-lintas Valeton Suite di PC. Kabari saya kalau Anda punya laptop Windows.`);
+    $('#btnWizCopy').hidden = !this.msgs.length;
+  },
+  text() {
+    const lines = [`Rig Saku · uji sinkron GP-100 · ${new Date().toISOString()}`, `SysEx diizinkan: ${Midi.sysex}`, `Port: ${Midi.out ? Midi.out.name : '-'}`, ''];
+    for (const m of this.msgs.slice(0, 600)) lines.push(`${(m.t / 1000).toFixed(3)}s  ${Lab.hex(m.d)}`);
+    if (this.msgs.length > 600) lines.push(`… ${this.msgs.length - 600} pesan lagi dipotong`);
+    return lines.join('\n');
+  },
+  init() {
+    $('#btnWizStart').addEventListener('click', () => this.begin());
+    $('#btnWizStop').addEventListener('click', () => this.finish());
+    $('#btnWizCopy').addEventListener('click', () => copyText(this.text()));
   },
 };
 
@@ -2461,7 +2956,7 @@ async function boot() {
   envBanners();
   Tabs.init(); Settings.init(); Lab.init();
   Control.init(); Rec.init(); IRTest.init(); Tones.init(); T3K.init();
-  AI.init(); Editor.init(); Library.init();
+  WP.init(); MSheet.init(); Guide.init(); AI.init(); Library.init(); Wizard.init();
   bindSeg('autoMix'); bindSeg('mixTarget'); bindSeg('mixRole'); bindSeg('mixRoom');
   Tabs.onShow.nada = () => Tones.render();
   Tabs.onShow.rekam = () => Takes.render();
