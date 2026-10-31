@@ -1,0 +1,2483 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#13161b">
+<meta name="description" content="Kontrol, rekam, dan racik preset Valeton GP-100 dari HP Android.">
+<title>Rig Saku</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2313161b'/%3E%3Crect x='12' y='18' width='40' height='28' rx='6' fill='none' stroke='%23ffb23f' stroke-width='4'/%3E%3Ccircle cx='24' cy='32' r='4' fill='%23ffb23f'/%3E%3Ccircle cx='40' cy='32' r='4' fill='%23ebe8e1'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Saira+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: one-column phone app — status header, scrolling panels, fixed bottom tab bar (pedal silkscreen labels, LED states). */
+:root {
+  --bg: #13161b;
+  --panel: #1b1f26;
+  --raised: #242a33;
+  --line: #313844;
+  --fg: #ebe8e1;
+  --muted: #98a0aa;
+  --accent: #ffb23f;
+  --accent-ink: #1a1305;
+  --rec: #ff5a4f;
+  --ok: #4fcf8a;
+  --warn: #f2c14e;
+  --led-off: #3a414c;
+  --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 6px 18px rgba(0,0,0,.35);
+  --font-label: "Saira Condensed", "Roboto Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 12px;
+  --tabbar-h: 64px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eceef2; --panel: #ffffff; --raised: #f3f4f7; --line: #d5d9e0;
+    --fg: #15181d; --muted: #5d6570; --accent: #c27400; --accent-ink: #fff8ec;
+    --rec: #d8352b; --ok: #1f9a5a; --warn: #a87a00; --led-off: #c9ced6;
+    --shadow: 0 1px 2px rgba(20,25,35,.08), 0 4px 14px rgba(20,25,35,.06);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eceef2; --panel: #ffffff; --raised: #f3f4f7; --line: #d5d9e0;
+  --fg: #15181d; --muted: #5d6570; --accent: #c27400; --accent-ink: #fff8ec;
+  --rec: #d8352b; --ok: #1f9a5a; --warn: #a87a00; --led-off: #c9ced6;
+  --shadow: 0 1px 2px rgba(20,25,35,.08), 0 4px 14px rgba(20,25,35,.06);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 15px/1.45 var(--font-body);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: contain;
+}
+[hidden] { display: none !important; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* ── Header ─────────────────────────────────────────── */
+.top {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.top-inner {
+  display: flex; align-items: center; gap: 10px;
+  padding-block: 10px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 760px; margin: 0 auto;
+}
+.brand { display: flex; flex-direction: column; line-height: 1.05; min-width: 0; }
+.brand b { font: 700 22px/1 var(--font-label); letter-spacing: .04em; text-transform: uppercase; }
+.brand span { font-size: 11.5px; color: var(--muted); letter-spacing: .02em; }
+.top .spacer { flex: 1; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 600 12px/1 var(--font-label); letter-spacing: .08em; text-transform: uppercase;
+  padding: 6px 9px; border-radius: 99px; border: 1px solid var(--line);
+  color: var(--muted); background: var(--panel); white-space: nowrap;
+}
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--led-off); }
+.pill.on { color: var(--fg); }
+.pill.on i { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+.pill.rec i { background: var(--rec); box-shadow: 0 0 8px var(--rec); }
+.icon-btn {
+  width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel); display: grid; place-items: center; cursor: pointer; flex: none;
+}
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* ── Main panels ───────────────────────────────────── */
+main {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom, 0px));
+}
+.panel { display: none; flex-direction: column; gap: 14px; }
+.panel.active { display: flex; }
+
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
+  padding: 14px; display: flex; flex-direction: column; gap: 12px; min-width: 0;
+  box-shadow: var(--shadow);
+}
+.card-h { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.card-h h2 {
+  margin: 0; font: 700 15px/1.1 var(--font-label); letter-spacing: .12em; text-transform: uppercase;
+}
+.card-h .sub { color: var(--muted); font-size: 12.5px; }
+.card-h .end { margin-left: auto; display: flex; gap: 6px; }
+.note { color: var(--muted); font-size: 12.5px; margin: 0; }
+.note b { color: var(--fg); font-weight: 600; }
+.banner {
+  border: 1px solid color-mix(in srgb, var(--warn) 55%, var(--line));
+  background: color-mix(in srgb, var(--warn) 10%, var(--panel));
+  border-radius: var(--r); padding: 12px 14px; font-size: 13.5px;
+}
+.banner.err { border-color: color-mix(in srgb, var(--rec) 55%, var(--line)); background: color-mix(in srgb, var(--rec) 9%, var(--panel)); }
+.banner b { display: block; margin-bottom: 2px; }
+
+/* ── Buttons ───────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--raised);
+  font: 600 14px/1 var(--font-body); text-decoration: none; color: var(--fg);
+  touch-action: manipulation; user-select: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.danger { color: var(--rec); }
+.btn.ghost { background: transparent; }
+.btn.sm { min-height: 34px; padding: 0 11px; font-size: 13px; border-radius: 8px; }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+.btn svg { width: 18px; height: 18px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row.nowrap { flex-wrap: nowrap; }
+.grow { flex: 1; min-width: 0; }
+
+/* ── Patch stepper ─────────────────────────────────── */
+.patch {
+  display: grid; grid-template-columns: 76px 1fr 76px; gap: 10px; align-items: stretch;
+}
+.patch .step {
+  height: 76px; border-radius: 14px; border: 1px solid var(--line); background: var(--raised);
+  font: 700 30px/1 var(--font-label); cursor: pointer; touch-action: manipulation;
+}
+.patch .step:active { background: var(--accent); color: var(--accent-ink); }
+.patch .mid {
+  border-radius: 14px; background: var(--bg); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6px;
+}
+.patch .mid small { font: 600 11px/1 var(--font-label); letter-spacing: .16em; color: var(--muted); text-transform: uppercase; }
+.patch .mid strong { font: 700 22px/1.15 var(--font-label); letter-spacing: .04em; }
+
+/* ── Module tiles ──────────────────────────────────── */
+.modules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mod {
+  position: relative; border-radius: 12px; border: 1px solid var(--line); background: var(--raised);
+  padding: 12px 10px 10px; min-height: 72px; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 6px;
+  touch-action: manipulation;
+}
+.mod b { font: 700 19px/1 var(--font-label); letter-spacing: .08em; }
+.mod span { font-size: 11px; color: var(--muted); line-height: 1.2; }
+.mod .led {
+  position: absolute; top: 10px; right: 10px; width: 11px; height: 11px; border-radius: 50%;
+  border: 2px solid var(--led-off); background: transparent;
+}
+.mod.off .led { background: var(--led-off); border-color: var(--led-off); }
+.mod.on { border-color: color-mix(in srgb, var(--hue) 60%, var(--line)); background: color-mix(in srgb, var(--hue) 12%, var(--raised)); }
+.mod.on .led { background: var(--hue); border-color: var(--hue); box-shadow: 0 0 10px var(--hue); }
+
+/* ── Sliders & fields ──────────────────────────────── */
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+.slider label { font-size: 13.5px; }
+.slider output { font: 500 13px/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); min-width: 3.2ch; text-align: right; }
+.slider input { grid-column: 1 / -1; }
+input[type="range"] { width: 100%; height: 30px; accent-color: var(--accent); background: transparent; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field > span { font-size: 12.5px; color: var(--muted); }
+.input, select.input, textarea.input {
+  width: 100%; min-height: 42px; padding: 9px 11px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+}
+textarea.input { min-height: 96px; resize: vertical; line-height: 1.4; }
+.input.mono { font-family: var(--font-mono); font-size: 13px; }
+.num {
+  display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg);
+}
+.num button { width: 42px; border: 0; background: var(--raised); font: 700 18px/1 var(--font-label); cursor: pointer; }
+.num input { width: 64px; text-align: center; border: 0; background: transparent; font: 600 16px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex-wrap: wrap; max-width: 100%; }
+.field > .seg { align-self: flex-start; }
+.seg button { min-height: 38px; padding: 0 12px; border: 0; background: var(--raised); cursor: pointer; font-size: 13px; }
+.seg button.sel { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .grid2.stack { grid-template-columns: 1fr; } }
+details.fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: "+"; margin-left: auto; font: 700 18px/1 var(--font-label); color: var(--muted); }
+details.fold[open] > summary::after { content: "–"; }
+
+/* ── Meter & recorder ─────────────────────────────── */
+.meter { display: grid; gap: 6px; }
+.meter .bar { position: relative; height: 12px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.meter .fill { position: absolute; inset: 0 auto 0 0; width: 0%; background: linear-gradient(90deg, var(--ok) 0 70%, var(--warn) 70% 90%, var(--rec) 90%); background-size: var(--mw, 100%) 100%; }
+.meter .hold { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--fg); left: 0; opacity: .8; }
+.meter .scale { display: flex; justify-content: space-between; font: 500 10px/1 var(--font-mono); color: var(--muted); }
+.clip { font: 700 11px/1 var(--font-label); letter-spacing: .12em; padding: 4px 7px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+.clip.hot { background: var(--rec); color: #fff; border-color: transparent; }
+.recbar { display: flex; align-items: center; gap: 14px; }
+.recbtn {
+  width: 84px; height: 84px; border-radius: 50%; border: 3px solid var(--line); background: var(--raised);
+  display: grid; place-items: center; cursor: pointer; flex: none; touch-action: manipulation;
+}
+.recbtn i { width: 34px; height: 34px; border-radius: 50%; background: var(--rec); transition: border-radius .15s, transform .15s; }
+.recbtn.live { border-color: var(--rec); }
+.recbtn.live i { border-radius: 6px; transform: scale(.78); }
+.recbtn.count i { animation: pulse .5s infinite alternate; }
+@keyframes pulse { to { opacity: .35; } }
+.timer { font: 600 34px/1 var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.timer + small { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+/* ── Lists ─────────────────────────────────────────── */
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item {
+  border: 1px solid var(--line); border-radius: 10px; background: var(--raised);
+  padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+}
+.item-h { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.item-h .t { flex: 1; min-width: 0; }
+.item-h .t b { display: block; overflow-wrap: anywhere; }
+.item-h .t small { color: var(--muted); font-size: 12px; }
+.tag {
+  font: 700 10.5px/1 var(--font-label); letter-spacing: .1em; text-transform: uppercase;
+  padding: 4px 6px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); flex: none;
+}
+.tag.nam { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.tag.ir { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); }
+.tag.t3k { color: var(--fg); }
+.wave { width: 100%; height: 44px; display: block; border-radius: 6px; background: var(--bg); }
+.empty { text-align: center; color: var(--muted); padding: 18px 8px; font-size: 13.5px; border: 1px dashed var(--line); border-radius: 10px; }
+
+/* ── Preset recipe ─────────────────────────────────── */
+.ai-results { display: flex; flex-direction: column; gap: 10px; }
+.recipe { border: 1px solid var(--line); border-radius: 12px; background: var(--raised); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.recipe h3 { margin: 0; font: 700 18px/1.15 var(--font-label); letter-spacing: .03em; text-wrap: balance; }
+.recipe p { margin: 0; font-size: 13.5px; }
+.chain { display: flex; flex-wrap: wrap; gap: 5px; }
+.chain .c {
+  font: 600 11.5px/1 var(--font-label); letter-spacing: .06em; padding: 5px 7px; border-radius: 6px;
+  border: 1px solid var(--line); color: var(--muted); background: var(--bg);
+}
+.chain .c.on { color: var(--fg); border-color: color-mix(in srgb, var(--hue) 60%, var(--line)); background: color-mix(in srgb, var(--hue) 14%, var(--bg)); }
+.modrow { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.modrow-h { display: flex; align-items: center; gap: 10px; }
+.modrow-h b { font: 700 16px/1 var(--font-label); letter-spacing: .08em; width: 42px; }
+.switch { position: relative; width: 46px; height: 26px; flex: none; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch i { position: absolute; inset: 0; border-radius: 99px; background: var(--led-off); transition: background .15s; pointer-events: none; }
+.switch i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--fg); transition: transform .15s; }
+.switch input:checked + i { background: var(--accent); }
+.switch input:checked + i::after { transform: translateX(20px); background: var(--accent-ink); }
+.params { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.param { display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 4px 4px 8px; min-width: 0; }
+.param input.k { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 12.5px; }
+.param input.v { width: 52px; border: 0; background: var(--raised); border-radius: 6px; text-align: center; font: 600 13px/1 var(--font-mono); padding: 6px 2px; }
+.param button { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; }
+
+/* ── Log ───────────────────────────────────────────── */
+.log {
+  font: 12px/1.5 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 10px; height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.log .in { color: var(--ok); }
+.log .out { color: var(--accent); }
+.log .sys { color: var(--muted); }
+.log .gp { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+/* ── Tab bar ───────────────────────────────────────── */
+.tabbar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  background: color-mix(in srgb, var(--panel) 94%, transparent); backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
+}
+.tabbar nav { display: grid; grid-template-columns: repeat(5, 1fr); max-width: 760px; margin: 0 auto; height: var(--tabbar-h); }
+.tabbar button {
+  border: 0; background: transparent; cursor: pointer; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  font: 600 11.5px/1 var(--font-label); letter-spacing: .1em; text-transform: uppercase;
+}
+.tabbar button svg { width: 22px; height: 22px; }
+.tabbar button.active { color: var(--accent); }
+
+/* ── Sheets & overlays ─────────────────────────────── */
+.sheet-wrap { position: fixed; inset: 0; z-index: 50; background: rgba(5,7,10,.55); display: flex; align-items: flex-end; justify-content: center; }
+.sheet {
+  width: 100%; max-width: 760px; max-height: 92vh; overflow: auto;
+  background: var(--panel); border-radius: 18px 18px 0 0; border: 1px solid var(--line); border-bottom: 0;
+  padding-block: 8px calc(18px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 14px;
+}
+.sheet .grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 0; }
+.sheet-h { display: flex; align-items: center; gap: 10px; position: sticky; top: -8px; background: var(--panel); padding-block: 8px; z-index: 2; }
+.sheet-h h2 { margin: 0; font: 700 20px/1 var(--font-label); letter-spacing: .06em; text-transform: uppercase; flex: 1; }
+.sheet section { display: flex; flex-direction: column; gap: 10px; }
+.sheet section h3 { margin: 6px 0 0; font: 700 13px/1 var(--font-label); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+.stage {
+  position: fixed; inset: 0; z-index: 60; background: var(--bg);
+  display: flex; flex-direction: column; gap: 12px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.stage-top { display: flex; align-items: center; gap: 10px; }
+.stage-top b { font: 700 20px/1 var(--font-label); letter-spacing: .12em; text-transform: uppercase; flex: 1; }
+.stage .patch { grid-template-columns: 1fr 1fr; flex: 1.2; }
+.stage .patch .step { height: auto; min-height: 120px; font-size: 54px; }
+.stage .modules { flex: 1.6; }
+.stage .mod { min-height: 0; }
+.stage .mod b { font-size: 26px; }
+.stage .tapbig { min-height: 64px; font: 700 20px/1 var(--font-label); letter-spacing: .1em; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 80;
+  bottom: calc(var(--tabbar-h) + 16px + env(safe-area-inset-bottom, 0px));
+  background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: 13.5px;
+  max-width: calc(100% - 32px); box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.spin { width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: rot .8s linear infinite; display: inline-block; }
+@keyframes rot { to { transform: rotate(360deg); } }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; font-size: 12.5px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; overflow-wrap: anywhere; font-family: var(--font-mono); font-size: 12px; }
+.t3k-card { display: flex; gap: 10px; align-items: center; }
+.t3k-card img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--bg); flex: none; }
+.codebox { font: 12px/1.45 var(--font-mono); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-wrap: anywhere; user-select: all; }
+
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand"><b>Rig Saku</b><span>untuk Valeton GP-100</span></div>
+    <div class="spacer"></div>
+    <span class="pill" id="pillMidi" title="Status MIDI"><i></i>MIDI</span>
+    <span class="pill" id="pillAudio" title="Status audio"><i></i>Audio</span>
+    <button class="icon-btn" id="btnSettings" aria-label="Pengaturan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <div id="envBanners"></div>
+
+  <!-- ═══════════════ KONTROL ═══════════════ -->
+  <section class="panel active" id="tab-kontrol" aria-label="Kontrol">
+    <div class="card" id="connectCard">
+      <div class="card-h"><h2>Sambungan</h2><span class="sub" id="midiPortName">Belum tersambung</span></div>
+      <p class="note">Colok GP-100 ke HP pakai kabel USB + OTG, nyalakan pedal, lalu tekan Sambungkan. Chrome akan meminta izin perangkat MIDI.</p>
+      <div class="row">
+        <button class="btn primary" id="btnConnect">Sambungkan GP-100</button>
+        <button class="btn" id="btnStage" disabled>Mode Panggung</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Patch</h2><span class="sub">ganti patch di pedal</span></div>
+      <div class="patch">
+        <button class="step" data-patch="down" aria-label="Patch sebelumnya">◀</button>
+        <div class="mid"><small>Patch</small><strong id="patchLabel">—</strong></div>
+        <button class="step" data-patch="up" aria-label="Patch berikutnya">▶</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Modul</h2><span class="sub">ketuk untuk on / off</span><div class="end"><button class="btn sm ghost" id="btnModsReset">Reset lampu</button></div></div>
+      <div class="modules" id="modules"></div>
+      <p class="note">Lampu menunjukkan perintah terakhir yang dikirim aplikasi. Pedal belum bisa dibaca balik, jadi lampu kembali netral setiap ganti patch.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Volume &amp; Pedal</h2></div>
+      <div class="slider"><label for="slPatchVol">Patch volume</label><output id="oPatchVol">—</output><input type="range" id="slPatchVol" min="0" max="100" value="50" data-cc="patchVolume"></div>
+      <div class="slider"><label for="slVolPedal">Volume pedal</label><output id="oVolPedal">—</output><input type="range" id="slVolPedal" min="0" max="100" value="100" data-cc="volumePedal"></div>
+      <div class="slider"><label for="slExp">Expression (wah, dll.)</label><output id="oExp">—</output><input type="range" id="slExp" min="0" max="100" value="0" data-cc="expression"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Tempo &amp; Tuner</h2></div>
+      <div class="row">
+        <div class="num" aria-label="BPM">
+          <button data-bpm="-1" aria-label="Kurangi BPM">−</button>
+          <input id="bpm" type="number" inputmode="numeric" min="40" max="250" value="120">
+          <button data-bpm="1" aria-label="Tambah BPM">+</button>
+        </div>
+        <button class="btn" id="btnTap">Tap</button>
+        <button class="btn" id="btnSendBpm">Kirim BPM</button>
+        <button class="btn" id="btnTuner" aria-pressed="false">Tuner</button>
+      </div>
+      <p class="note">BPM dipakai untuk delay/modulasi yang sinkron tempo, juga untuk metronom saat merekam.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Drum</h2><span class="sub">99 pola bawaan pedal</span></div>
+      <div class="row">
+        <button class="btn" id="btnDrumMenu" aria-pressed="false">Tampilkan di pedal</button>
+        <button class="btn" id="btnDrumPlay" aria-pressed="false">▶ Main</button>
+      </div>
+      <div class="row">
+        <span class="note">Pola</span>
+        <div class="num"><button data-drum="-1" aria-label="Pola sebelumnya">−</button><input id="drumStyle" type="number" inputmode="numeric" min="1" max="99" value="1"><button data-drum="1" aria-label="Pola berikutnya">+</button></div>
+        <span class="note">BPM drum</span>
+        <div class="num"><button data-dbpm="-1" aria-label="Kurangi BPM drum">−</button><input id="drumBpm" type="number" inputmode="numeric" min="40" max="250" value="100"><button data-dbpm="1" aria-label="Tambah BPM drum">+</button></div>
+      </div>
+      <div class="slider"><label for="slDrumVol">Volume drum</label><output id="oDrumVol">—</output><input type="range" id="slDrumVol" min="0" max="100" value="50" data-cc="drumVolume"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Looper</h2><span class="sub">looper 90 detik di pedal</span></div>
+      <div class="row">
+        <button class="btn" id="btnLoopMenu" aria-pressed="false">Tampilkan di pedal</button>
+        <button class="btn" id="btnLoopRec">● Rekam / Overdub</button>
+        <button class="btn" id="btnLoopPlay" aria-pressed="false">▶ Main / Stop</button>
+        <button class="btn danger" id="btnLoopErase">Hapus loop</button>
+      </div>
+      <div class="slider"><label for="slLoopRec">Volume rekam loop</label><output id="oLoopRec">—</output><input type="range" id="slLoopRec" min="0" max="100" value="100" data-cc="loopRecVol"></div>
+      <div class="slider"><label for="slLoopPlay">Volume putar loop</label><output id="oLoopPlay">—</output><input type="range" id="slLoopPlay" min="0" max="100" value="100" data-cc="loopPlayVol"></div>
+    </div>
+
+    <details class="card fold">
+      <summary><h2 style="margin:0;font:700 15px/1.1 var(--font-label);letter-spacing:.12em;text-transform:uppercase">Global</h2><span class="note">input, footswitch, posisi volume pedal</span></summary>
+      <div class="slider"><label for="slInput">Input level</label><output id="oInput">—</output><input type="range" id="slInput" min="0" max="100" value="50" data-cc="inputLevel"></div>
+      <div class="row"><span class="note grow">Mode footswitch</span><div class="seg" data-seg="fsMode"><button data-v="0">Patch</button><button data-v="127">Stomp</button></div></div>
+      <div class="row"><span class="note grow">Volume pedal</span><div class="seg" data-seg="volPos"><button data-v="0">Pre</button><button data-v="127">Post</button></div></div>
+      <p class="note">Tiga kontrol ini memakai nilai standar Valeton (0 / 127) yang belum dicoba di GP-100. Kalau terbalik, laporkan ke saya.</p>
+    </details>
+  </section>
+
+  <!-- ═══════════════ PRESET ═══════════════ -->
+  <section class="panel" id="tab-preset" aria-label="Preset">
+    <div class="card">
+      <div class="card-h"><h2>Asisten Preset AI</h2><span class="sub" id="aiModeLabel"></span></div>
+      <div class="field"><span>Lagu atau sound yang diinginkan</span>
+        <input class="input" id="aiSong" placeholder="mis. Sweet Child O' Mine – Guns N' Roses, bagian intro">
+      </div>
+      <div class="grid2 stack">
+        <label class="field"><span>Gitar &amp; pickup (opsional)</span><input class="input" id="aiGuitar" placeholder="mis. Stratocaster single-coil"></label>
+        <label class="field"><span>Keluaran ke</span>
+          <select class="input" id="aiOutput"><option>headphone</option><option>ampli gitar (input depan)</option><option>speaker aktif / FRFR</option><option>rekaman / mixer</option></select>
+        </label>
+      </div>
+      <label class="field"><span>Catatan tambahan (opsional)</span><input class="input" id="aiExtra" placeholder="mis. lebih sedikit gain, tanpa reverb"></label>
+      <div class="row">
+        <button class="btn primary" id="btnAiAsk">Buatkan 3 pilihan preset</button>
+        <button class="btn" id="btnAiCopy">Salin prompt untuk Claude</button>
+        <button class="btn ghost" id="btnAiPaste">Tempel jawaban</button>
+      </div>
+      <div id="aiPasteBox" hidden class="field">
+        <span>Tempel seluruh jawaban dari Claude di sini</span>
+        <textarea class="input mono" id="aiPasteText" placeholder='{"presets":[...]}'></textarea>
+        <div class="row"><button class="btn primary sm" id="btnAiParse">Baca jawaban</button></div>
+      </div>
+      <p class="note" id="aiStatus"></p>
+      <div class="ai-results" id="aiResults"></div>
+    </div>
+
+    <div class="card" id="editorCard" hidden>
+      <div class="card-h"><h2>Edit Preset</h2><div class="end"><button class="btn sm ghost" id="btnEditorClose">Tutup</button></div></div>
+      <div class="grid2 stack">
+        <label class="field"><span>Nama preset</span><input class="input" id="edName"></label>
+        <label class="field"><span>Lagu / referensi</span><input class="input" id="edSong"></label>
+      </div>
+      <div class="row">
+        <span class="note">BPM</span><input class="input" id="edBpm" type="number" inputmode="numeric" style="width:96px">
+        <span class="note">Patch volume</span><input class="input" id="edVol" type="number" inputmode="numeric" style="width:96px">
+      </div>
+      <label class="field"><span>Catatan &amp; cara main</span><textarea class="input" id="edNotes"></textarea></label>
+      <div id="edMods"></div>
+      <div class="field"><span>Saran NAM / IR</span><div class="codebox" id="edToneHint">—</div></div>
+      <div class="row">
+        <button class="btn primary" id="btnEdSend">Kirim on/off modul ke pedal</button>
+        <button class="btn" id="btnEdSave">Simpan</button>
+        <button class="btn" id="btnEdShare">Bagikan teks</button>
+        <button class="btn" id="btnEdT3k">Cari NAM/IR di TONE3000</button>
+      </div>
+      <p class="note">Modul on/off dikirim langsung via MIDI. Model dan nilai knob jadi panduan: setel di pedal (atau di Valeton Suite), lalu simpan patch di pedal.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Pustaka Preset</h2><span class="sub">resep AI &amp; file .prst</span>
+        <div class="end"><label class="btn sm" for="filePrst">Impor .prst</label><input type="file" id="filePrst" accept=".prst,.xml,application/xml,text/xml,application/octet-stream" multiple hidden></div>
+      </div>
+      <div class="list" id="presetList"></div>
+      <p class="note">File .prst bisa diimpor, dilihat isinya, dan diunduh atau dibagikan lagi. Untuk memasukkannya ke pedal, buka file di Valeton Suite (PC) lalu kirim ke slot.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ NADA (NAM / IR) ═══════════════ -->
+  <section class="panel" id="tab-nada" aria-label="NAM dan IR">
+    <div class="card">
+      <div class="card-h"><h2>TONE3000</h2><span class="sub" id="t3kStatus">belum tersambung</span></div>
+      <p class="note">Cari capture NAM dan IR dari TONE3000, dengarkan di sana, lalu pilih. File masuk ke pustaka di bawah.</p>
+      <div class="row">
+        <button class="btn primary" id="btnT3kNam">Telusuri NAM</button>
+        <button class="btn" id="btnT3kIr">Telusuri IR</button>
+        <button class="btn ghost" id="btnT3kLists" hidden>Favorit &amp; riwayat</button>
+      </div>
+      <div class="row" id="t3kTabs" hidden>
+        <div class="seg" id="t3kSeg">
+          <button data-l="favorited" class="sel">Favorit</button><button data-l="downloaded">Diunduh</button><button data-l="trending">Trending</button><button data-l="latest">Terbaru</button>
+        </div>
+      </div>
+      <div class="list" id="t3kList"></div>
+      <div id="t3kDetail"></div>
+      <p class="note" style="font-size:11.5px">Konten dari TONE3000 milik pembuatnya masing-masing. Rig Saku bukan aplikasi resmi TONE3000 maupun Valeton.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Pustaka NAM &amp; IR</h2><span class="sub" id="toneCount"></span>
+        <div class="end"><label class="btn sm" for="fileTone">Impor file</label><input type="file" id="fileTone" accept=".nam,.wav,.json,audio/wav,audio/x-wav" multiple hidden></div>
+      </div>
+      <div class="list" id="toneList"></div>
+      <p class="note">GP-100 menyimpan 20 IR pengguna dan capture NAM (SnapTone). Pengiriman ke pedal saat ini lewat Valeton Suite di PC: unduh file dari sini, lalu impor di Suite.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Uji IR di Rekaman</h2></div>
+      <p class="note">Rekam permainan dengan modul <b>CAB mati</b> (tombol di bawah), lalu bandingkan IR dari pustaka pada rekaman itu sebelum memasukkannya ke pedal.</p>
+      <div class="row"><button class="btn" id="btnCabOff">Matikan CAB di pedal</button><button class="btn ghost" id="btnGoRec">Ke tab Rekam</button></div>
+      <div class="grid2 stack">
+        <label class="field"><span>Rekaman</span><select class="input" id="irTake"></select></label>
+        <label class="field"><span>IR</span><select class="input" id="irPick"></select></label>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="btnIrPlay">▶ Putar</button>
+        <div class="seg" data-seg="irAB"><button data-v="dry" class="sel">Asli</button><button data-v="wet">Dengan IR</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ REKAM ═══════════════ -->
+  <section class="panel" id="tab-rekam" aria-label="Rekam">
+    <div class="card">
+      <div class="card-h"><h2>Input</h2><span class="sub" id="audioDevName">belum aktif</span></div>
+      <div class="row">
+        <button class="btn primary" id="btnAudio">Aktifkan audio GP-100</button>
+        <select class="input grow" id="audioDev" hidden aria-label="Pilih perangkat input"></select>
+      </div>
+      <div class="meter" aria-label="Level input">
+        <div class="row nowrap"><div class="bar grow"><div class="fill" id="mL"></div><div class="hold" id="hL"></div></div><span class="clip" id="clipL">L</span></div>
+        <div class="row nowrap"><div class="bar grow"><div class="fill" id="mR"></div><div class="hold" id="hR"></div></div><span class="clip" id="clipR">R</span></div>
+        <div class="scale"><span>-60</span><span>-36</span><span>-18</span><span>-9</span><span>-3</span><span>0 dB</span></div>
+      </div>
+      <p class="note">Atur volume keluaran USB di pedal sampai puncak permainan keras berada di sekitar -6 dB. Lampu merah = sinyal terlalu keras.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Rekam</h2></div>
+      <div class="recbar">
+        <button class="recbtn" id="btnRec" aria-label="Mulai rekam" disabled><i></i></button>
+        <div><div class="timer" id="recTime">00:00.0</div><small id="recHint">Aktifkan audio dulu</small></div>
+      </div>
+      <div class="grid2 stack">
+        <div class="field"><span>Hitungan masuk</span><div class="seg" data-seg="countIn"><button data-v="0" class="sel">Tanpa</button><button data-v="1">1 bar</button><button data-v="2">2 bar</button></div></div>
+        <div class="field"><span>Metronom saat rekam</span><div class="seg" data-seg="metro"><button data-v="0" class="sel">Mati</button><button data-v="1">Nyala</button></div></div>
+      </div>
+      <div class="field">
+        <span>Backing track (opsional)</span>
+        <div class="row">
+          <label class="btn sm" for="fileBacking">Pilih lagu</label><input type="file" id="fileBacking" accept="audio/*" hidden>
+          <span class="note grow" id="backingName">Belum ada</span>
+          <button class="btn sm ghost" id="btnBackingClear" hidden>Lepas</button>
+        </div>
+        <div class="slider"><label for="slBacking">Volume backing</label><output id="oBacking">80</output><input type="range" id="slBacking" min="0" max="100" value="80"></div>
+      </div>
+      <div class="row"><span class="note grow">Dengar input lewat HP</span><div class="seg" data-seg="monitor"><button data-v="0" class="sel">Mati</button><button data-v="1">Nyala</button></div></div>
+      <p class="note">Monitor lewat HP biasanya tidak perlu: suara gitar sudah terdengar langsung dari headphone di GP-100. Backing track dan metronom ikut keluar lewat GP-100 bila HP mengarahkan audio ke USB.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Auto Mix</h2><span class="sub">dirapikan otomatis setelah rekam</span></div>
+      <div class="row"><span class="note grow">Jalankan otomatis setiap selesai rekam</span><div class="seg" data-seg="autoMix"><button data-v="1">Ya</button><button data-v="0">Tidak</button></div></div>
+      <div class="field"><span>Target kekerasan</span><div class="seg" data-seg="mixTarget"><button data-v="-16">Natural −16</button><button data-v="-14">Streaming −14</button><button data-v="-11">Keras −11</button></div></div>
+      <div class="field"><span>Peran gitar terhadap backing</span><div class="seg" data-seg="mixRole"><button data-v="lead">Lead</button><button data-v="balance">Seimbang</button><button data-v="rhythm">Rhythm</button></div></div>
+      <div class="row"><span class="note grow">Tambah sedikit ruang (reverb)</span><div class="seg" data-seg="mixRoom"><button data-v="0">Mati</button><button data-v="1">Nyala</button></div></div>
+      <p class="note">Yang dilakukan: memotong diam di awal/akhir (tanpa backing), membuang dengung frekuensi rendah, mengurangi suara "bergumam" di 300 Hz, menghaluskan dinamika, menyamakan volume gitar dengan backing sesuai peran, mengoreksi latensi, lalu menormalkan ke target LUFS dengan puncak maksimal −1 dB. Rekaman asli tetap tersimpan.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Hasil Rekaman</h2><span class="sub" id="takeCount"></span></div>
+      <div class="list" id="takeList"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ LAB ═══════════════ -->
+  <section class="panel" id="tab-lab" aria-label="Lab">
+    <div class="card">
+      <div class="card-h"><h2>Monitor MIDI</h2><span class="sub">semua pesan masuk &amp; keluar</span></div>
+      <p class="note">Lab ini untuk membongkar protokol editor penuh. Biarkan monitor jalan, lalu putar knob, ganti patch, atau injak footswitch di pedal. Kalau ada pesan SysEx GP-100 yang masuk (ditandai), salin log dan kirim ke Claude.</p>
+      <div class="row">
+        <button class="btn sm" id="btnIdent">Kirim Identity Request</button>
+        <button class="btn sm" id="btnLogCopy">Salin log</button>
+        <button class="btn sm" id="btnLogSave">Unduh log</button>
+        <button class="btn sm ghost" id="btnLogClear">Bersihkan</button>
+        <label class="row" style="gap:6px;font-size:13px"><input type="checkbox" id="logSysexOnly"> hanya SysEx</label>
+      </div>
+      <div class="log" id="midiLog" aria-live="polite"></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Uji Manual</h2></div>
+      <div class="row">
+        <span class="note">CC</span><input class="input mono" id="manCc" type="number" min="0" max="127" value="48" style="width:80px">
+        <span class="note">nilai</span><input class="input mono" id="manVal" type="number" min="0" max="127" value="127" style="width:80px">
+        <button class="btn sm" id="btnManCc">Kirim CC</button>
+      </div>
+      <div class="row">
+        <span class="note">Program Change</span><input class="input mono" id="manPc" type="number" min="0" max="127" value="0" style="width:80px">
+        <button class="btn sm" id="btnManPc">Kirim PC</button>
+      </div>
+      <p class="note">Program Change belum terdokumentasi untuk GP-100. Kalau ternyata bisa memilih patch langsung, beri tahu saya agar saya tambahkan ke tab Kontrol.</p>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2>Port MIDI</h2></div>
+      <dl class="kv" id="portList"><dt>—</dt><dd>Belum ada akses MIDI</dd></dl>
+    </div>
+  </section>
+</main>
+
+<footer class="tabbar">
+  <nav>
+    <button data-tab="kontrol" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/></svg>Kontrol</button>
+    <button data-tab="preset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 8.3l5-.7z"/></svg>Preset</button>
+    <button data-tab="nada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12h3l2-6 4 12 2-6h7"/></svg>NAM/IR</button>
+    <button data-tab="rekam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>Rekam</button>
+    <button data-tab="lab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/></svg>Lab</button>
+  </nav>
+</footer>
+
+<!-- Settings sheet -->
+<div class="sheet-wrap" id="settings" hidden>
+  <div class="sheet" role="dialog" aria-label="Pengaturan">
+    <div class="grab"></div>
+    <div class="sheet-h"><h2>Pengaturan</h2><button class="btn sm" data-close>Tutup</button></div>
+    <section>
+      <h3>MIDI</h3>
+      <div class="grid2">
+        <label class="field"><span>Kanal MIDI pedal</span><select class="input" id="setChannel"></select></label>
+        <label class="field"><span>Port keluaran</span><select class="input" id="setPort"><option value="">Otomatis</option></select></label>
+      </div>
+      <label class="row" style="font-size:13.5px;gap:8px"><input type="checkbox" id="setSwapPatch"> Tukar arah tombol patch ◀ ▶</label>
+    </section>
+    <section>
+      <h3>Rekaman</h3>
+      <div class="grid2">
+        <div class="field"><span>Kedalaman bit WAV</span><div class="seg" data-seg="bitDepth"><button data-v="16" class="sel">16-bit</button><button data-v="24">24-bit</button></div></div>
+        <div class="field"><span>Kanal</span><div class="seg" data-seg="chanMode"><button data-v="2" class="sel">Stereo</button><button data-v="1">Mono</button></div></div>
+      </div>
+      <label class="field"><span>Koreksi latensi untuk mix backing (ms)</span><input class="input mono" id="setLatency" type="number" inputmode="numeric" min="0" max="500" placeholder="otomatis"></label>
+    </section>
+    <section>
+      <h3>AI (Anthropic)</h3>
+      <p class="note">Isi API key dari console.anthropic.com untuk meminta preset langsung di aplikasi. Key disimpan hanya di browser HP ini dan dikirim hanya ke api.anthropic.com. Tanpa key, pakai tombol "Salin prompt untuk Claude".</p>
+      <label class="field"><span>API key</span><input class="input mono" id="setAiKey" type="password" autocomplete="off" placeholder="sk-ant-..."></label>
+      <div class="grid2">
+        <label class="field"><span>Model</span>
+          <select class="input" id="setAiModel">
+            <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (seimbang)</option>
+            <option value="claude-haiku-5-5">Claude Haiku 5.5 (cepat, murah)</option>
+            <option value="claude-opus-5-5">Claude Opus 5.5 (paling teliti)</option>
+          </select>
+        </label>
+        <label class="field"><span>Cari referensi gear di web</span>
+          <select class="input" id="setAiWeb"><option value="1">Ya (sedikit lebih mahal)</option><option value="0">Tidak</option></select>
+        </label>
+      </div>
+    </section>
+    <section>
+      <h3>TONE3000</h3>
+      <p class="note">Buat API key gratis di tone3000.com (Settings → API), salin <b>publishable key</b> (t3k_pub_…) ke sini, dan daftarkan alamat di bawah sebagai redirect URI.</p>
+      <label class="field"><span>Publishable key</span><input class="input mono" id="setT3kKey" autocomplete="off" placeholder="t3k_pub_..."></label>
+      <div class="field"><span>Redirect URI aplikasi ini</span><div class="row nowrap"><div class="codebox grow" id="setRedirect"></div><button class="btn sm" id="btnCopyRedirect">Salin</button></div></div>
+      <div class="field"><span>Arsitektur NAM yang ditampilkan</span>
+        <select class="input" id="setT3kArch"><option value="">A1 + Custom (aman untuk semua firmware)</option><option value="2">A2 (firmware GP baru)</option><option value="1">A1 saja</option></select>
+      </div>
+      <button class="btn danger sm" id="btnT3kLogout" hidden>Putuskan akun TONE3000</button>
+    </section>
+    <section>
+      <h3>Data di HP ini</h3>
+      <p class="note" id="storageInfo">—</p>
+      <div class="row"><button class="btn sm" id="btnPersist">Minta penyimpanan permanen</button><button class="btn danger sm" id="btnWipe">Hapus semua data aplikasi</button></div>
+      <div class="row" id="wipeConfirm" hidden><span class="note grow">Hapus semua rekaman, preset, NAM/IR, dan pengaturan?</span><button class="btn danger sm" id="btnWipeYes">Ya, hapus</button><button class="btn sm" id="btnWipeNo">Batal</button></div>
+    </section>
+    <section>
+      <h3>Tentang</h3>
+      <p class="note">Rig Saku v1.0 · kontrol via MIDI CC standar GP-100 · rekaman WAV lewat USB audio. Bukan aplikasi resmi Valeton. Editor parameter penuh menyusul setelah protokol SysEx GP-100 terbongkar (lihat tab Lab).</p>
+    </section>
+  </div>
+</div>
+
+<!-- Stage mode -->
+<div class="stage" id="stage" hidden>
+  <div class="stage-top"><b>Mode Panggung</b><button class="btn sm" id="btnStageExit">Keluar</button></div>
+  <div class="patch">
+    <button class="step" data-patch="down" aria-label="Patch sebelumnya">◀</button>
+    <button class="step" data-patch="up" aria-label="Patch berikutnya">▶</button>
+  </div>
+  <div class="modules" id="stageModules"></div>
+  <div class="row nowrap">
+    <button class="btn tapbig grow" id="btnStageTap">TAP <span id="stageBpm" style="font-family:var(--font-mono)">120</span></button>
+    <button class="btn tapbig" id="btnStageTuner" style="min-width:110px">TUNER</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+'use strict';
+const VALETON_FX = [[0,"COMP","PRE"],[1,"COMP4","PRE"],[3,"S-Comp","PRE"],[10,"AC Boost","PRE"],[11,"B-Boost","PRE"],[12,"P-Boost","PRE"],[14,"14 Boost","PRE"],[20,"Micro Boost","PRE"],[25,"FAT BB","PRE"],[26,"Boost","PRE"],[27,"Gate 1","NR"],[29,"Gate 2","NR"],[33,"Gate 3","NR"],[16777216,"AC Refiner","PRE"],[16777217,"AC Sim","PRE"],[16777231,"T-Wah","PRE"],[16777237,"A-WAH","PRE"],[16777241,"Step Filter","PRE"],[16777249,"OCTA","PRE"],[16777251,"Pitch","PRE"],[16777252,"P-Bend","PRE"],[16777257,"Detune","MOD"],[16777262,"Bit Smash","MOD"],[16777263,"Ring Mod","PRE"],[16777267,"Saturate","PRE"],[16777269,"Guitar EQ 1","EQ"],[16777270,"Guitar EQ 2","EQ"],[16777273,"Bass EQ 1","EQ"],[16777274,"Bass EQ 2","EQ"],[16777276,"Mess EQ","EQ"],[16777283,"Hyper EQ","EQ"],[16777289,"Hammy","PRE"],[16777293,"Harmonizer 1","PRE"],[16777294,"Harmonizer 2","PRE"],[50331648,"Green OD","DST"],[50331649,"OD 9","PRE"],[50331650,"Yellow OD","PRE"],[50331652,"Swarm","DST"],[50331654,"Super OD","PRE"],[50331656,"Scream OD","DST"],[50331657,"Blues OD","PRE"],[50331658,"Force","DST"],[50331659,"Tube","DST"],[50331662,"Blues Master","DST"],[50331663,"Master OD","DST"],[50331664,"TaiChi OD","DST"],[50331668,"Penesas","PRE"],[50331676,"Precise OD","DST"],[50331678,"Timmy OD","DST"],[50331682,"Lazaro","DST"],[50331684,"Red Haze","DST"],[50331686,"Sora Fuzz","DST"],[50331689,"Plustortion","DST"],[50331690,"SM Dist","DST"],[50331691,"Darktale","DST"],[50331693,"Chief","DST"],[50331694,"Master Dist","DST"],[50331696,"La Charger","DST"],[50331698,"Revolt","DST"],[50331711,"Flex OD","DST"],[50331712,"Bass OD","DST"],[50331716,"Black Bass","DST"],[50331728,"Empire OD","DST"],[50331729,"Bass Hammer","DST"],[50331730,"Flagman Dist","DST"],[67108864,"A-Chorus","MOD"],[67108865,"G-Chorus","MOD"],[67108866,"C-Chorus","MOD"],[67108872,"B-Chorus","MOD"],[67108879,"M-Chorus","MOD"],[67108881,"Jet","MOD"],[67108882,"B-Jet","MOD"],[67108883,"N-Jet","MOD"],[67108884,"Trem Jet","MOD"],[67108885,"V-Roto","MOD"],[67108886,"G-Roto","MOD"],[67108887,"Vibrato","MOD"],[67108888,"Vibrato T","MOD"],[67108889,"O-Phase","MOD"],[67108890,"G-Phase","MOD"],[67108891,"S-Phase","MOD"],[67108894,"Pan Phase","MOD"],[67108895,"M-Vibe","MOD"],[67108896,"Vibe","MOD"],[67108897,"O-Trem","MOD"],[67108902,"Sine Trem","MOD"],[67108903,"Triangle Trem","MOD"],[67108904,"Bias Trem","MOD"],[67108909,"Auto Swell","PRE"],[67108911,"Hold","PRE"],[67108912,"Freeze","PRE"],[83886081,"V-Wah","WAH"],[83886086,"S-Wah","WAH"],[83886087,"B-Wah","WAH"],[83886088,"C-Wah","WAH"],[83886090,"P-Wah","WAH"],[100663299,"Volume","VOL"],[117440513,"Tweedy","AMP"],[117440515,"Bellman 59N","AMP"],[117440516,"Dark Twin","AMP"],[117440517,"Dark DLX","AMP"],[117440521,"Dark Vibra","AMP"],[117440525,"Silver Twin","AMP"],[117440527,"SUPDual CL","AMP"],[117440528,"Foxy 15TB","AMP"],[117440529,"Foxy 30N","AMP"],[117440532,"J-120 CL","AMP"],[117440533,"Match CL","AMP"],[117440537,"L-Star CL","AMP"],[117440538,"BogSV CL","AMP"],[117440539,"Z38 CL","AMP"],[117440543,"Knights CL","AMP"],[117440546,"Bad-KT CL","AMP"],[117440547,"Solo100 CL","AMP"],[117440548,"Bellman 59B","AMP"],[117440551,"Foxy 30TB","AMP"],[117440552,"SUPDual OD","AMP"],[117440554,"UK 45","AMP"],[117440555,"UK 45+","AMP"],[117440556,"UK 45JP","AMP"],[117440557,"UK 50","AMP"],[117440558,"UK 50+","AMP"],[117440559,"UK 50JP","AMP"],[117440560,"UK SLP","AMP"],[117440565,"UK 800","AMP"],[117440569,"Mess2C+ 1","AMP"],[117440570,"Mess2C+ 2","AMP"],[117440571,"Mess2C+ 3","AMP"],[117440573,"BogSV OD","AMP"],[117440574,"Juice30 OD","AMP"],[117440576,"Flagman 1","AMP"],[117440577,"Flagman 2","AMP"],[117440579,"Bog BlueV","AMP"],[117440580,"Bog BlueM","AMP"],[117440583,"Solo100 OD","AMP"],[117440584,"Match OD","AMP"],[117440585,"Z38 OD","AMP"],[117440586,"L-Star OD","AMP"],[117440587,"Bad-KT OD","AMP"],[117440590,"UK 900","AMP"],[117440595,"Juice R100","AMP"],[117440597,"Mess4 LD","AMP"],[117440598,"Mess4 LD 2","AMP"],[117440599,"Mess4 LD 3","AMP"],[117440601,"Solo100 LD","AMP"],[117440602,"EV 51","AMP"],[117440605,"Flagman+ 1","AMP"],[117440606,"Flagman+ 2","AMP"],[117440607,"Eagle 120","AMP"],[117440608,"Eagle 120+","AMP"],[117440611,"Power LD","AMP"],[117440613,"Dizz VH","AMP"],[117440614,"Dizz VH S","AMP"],[117440616,"Mess DualV","AMP"],[117440617,"Mess DualM","AMP"],[117440618,"Dizz VH+","AMP"],[117440619,"Dizz VH+ S","AMP"],[117440621,"Bog RedV","AMP"],[117440622,"Bog RedM","AMP"],[117440627,"Classic Bass","AMP"],[117440629,"Foxy Bass","AMP"],[117440631,"Mess Bass","AMP"],[117440635,"Knights CL+","AMP"],[117440636,"Knights OD","AMP"],[134217845,"Mini Bass","AMP"],[134217846,"Bass Pre","AMP"],[134217850,"AC Pre","AMP"],[134217851,"AC Pre 2","AMP"],[167772160,"SUP ZEP","CAB"],[167772161,"TWD CP","CAB"],[167772162,"TWD PRC","CAB"],[167772163,"DARK LUX","CAB"],[167772164,"DARK VIT","CAB"],[167772165,"ROUT","CAB"],[167772166,"BogSV","CAB"],[167772167,"Bad-KT","CAB"],[167772168,"FOXY 1","CAB"],[167772169,"D STAR","CAB"],[167772170,"TOM OPEN","CAB"],[167772171,"TWD LUX","CAB"],[167772172,"US STO","CAB"],[167772173,"ACE","CAB"],[167772174,"UK G12","CAB"],[167772175,"FOXY 2","CAB"],[167772176,"Match","CAB"],[167772177,"J-120","CAB"],[167772178,"Dark Twin","CAB"],[167772179,"UK GRN 1","CAB"],[167772180,"TWD SUP","CAB"],[167772181,"BOUTI","CAB"],[167772182,"Bellman 1","CAB"],[167772183,"SUP","CAB"],[167772184,"MATT TWD","CAB"],[167772185,"SUP Star","CAB"],[167772186,"Freed","CAB"],[167772187,"Dark CS","CAB"],[167772188,"DB Rock","CAB"],[167772189,"Blue SK","CAB"],[167772190,"Bellman 2","CAB"],[167772191,"UK LD","CAB"],[167772192,"UK TD","CAB"],[167772193,"UK MD","CAB"],[167772194,"UK GRN 2","CAB"],[167772195,"EV","CAB"],[167772196,"Mess","CAB"],[167772197,"Bog","CAB"],[167772198,"Eagle","CAB"],[167772199,"Uban","CAB"],[167772200,"Solo","CAB"],[167772201,"Juice","CAB"],[167772202,"H-WAY","CAB"],[167772203,"UK Dark","CAB"],[167772204,"Way","CAB"],[167772205,"Dumb","CAB"],[167772206,"Dizz","CAB"],[167772207,"TRP","CAB"],[167772208,"UK 75","CAB"],[167772209,"King","CAB"],[167772210,"ADM 1","CAB"],[167772211,"Workman 1","CAB"],[167772212,"F-TOP","CAB"],[167772213,"US BASS","CAB"],[167772214,"MATT","CAB"],[167772215,"ADM 2","CAB"],[167772216,"AMPG 1","CAB"],[167772217,"Workman 2","CAB"],[167772218,"HACK","CAB"],[167772219,"AMPG 2","CAB"],[167772220,"AC","CAB"],[167772221,"AC Dream","CAB"],[167772222,"OM","CAB"],[167772223,"JUMBO","CAB"],[167772224,"Bird","CAB"],[167772225,"GA","CAB"],[167772226,"Classic AC","CAB"],[167772227,"Mandolin","CAB"],[167772228,"Fretless Bass","CAB"],[167772229,"Double Bass","CAB"],[168820736,"User IR","CAB"],[168820737,"User IR","CAB"],[168820738,"User IR","CAB"],[168820739,"User IR","CAB"],[168820740,"User IR","CAB"],[168820741,"User IR","CAB"],[168820742,"User IR","CAB"],[168820743,"User IR","CAB"],[168820744,"User IR","CAB"],[168820745,"User IR","CAB"],[168820746,"User IR","CAB"],[168820747,"User IR","CAB"],[168820748,"User IR","CAB"],[168820749,"User IR","CAB"],[168820750,"User IR","CAB"],[168820751,"User IR","CAB"],[168820752,"User IR","CAB"],[168820753,"User IR","CAB"],[168820754,"User IR","CAB"],[168820755,"User IR","CAB"],[184549376,"Pure","DLY"],[184549377,"Analog","DLY"],[184549378,"Tape","DLY"],[184549379,"Dual Echo","DLY"],[184549380,"Ping Pong","DLY"],[184549381,"Slapback","DLY"],[184549382,"Sweep Echo","DLY"],[184549385,"Ring Echo","DLY"],[184549387,"Tube","DLY"],[184549388,"M-Echo","DLY"],[184549389,"Sweet Echo","DLY"],[184549394,"999 Echo","DLY"],[184549396,"Vintage Rack","DLY"],[184549405,"BBD Delay S","DLY"],[184549407,"Digital Delay S","DLY"],[184549409,"Tape Delay S","DLY"],[184549414,"Lofi Echo","DLY"],[184549416,"Rev Echo","DLY"],[184549418,"Ambience 1","DLY"],[184549422,"Ambience 2","DLY"],[184549426,"Broken Delay","DLY"],[184549427,"Ice Delay","DLY"],[201326592,"Room","RVB"],[201326593,"Hall","RVB"],[201326594,"Church","RVB"],[201326595,"Plate","RVB"],[201326596,"Spring","RVB"],[201326598,"N-Star","RVB"],[201326599,"Deepsea","RVB"],[201326600,"Sweet Space","RVB"],[201326601,"Shimmer","RVB"],[201326603,"Studio","RVB"],[201326604,"Club","RVB"],[201326605,"Concert","RVB"],[201326606,"Arena","RVB"],[201326609,"Amp Spring","RVB"],[201326610,"Tube Spring","RVB"],[251658240,"SnapTone","AMP"],[251658241,"SnapTone","AMP"],[251658242,"SnapTone","AMP"],[251658243,"SnapTone","AMP"],[251658244,"SnapTone","AMP"],[251658245,"SnapTone","DST"],[251658246,"SnapTone","DST"],[251658247,"SnapTone","DST"],[251658248,"SnapTone","DST"],[251658249,"SnapTone","DST"]];
+'use strict';
+/* Rig Saku — companion app untuk Valeton GP-100.
+   Satu file, tanpa server. Kontrol via MIDI CC standar GP-100, rekaman lewat USB audio,
+   pustaka NAM/IR + TONE3000, asisten preset AI. */
+
+// ─── Utilitas DOM ────────────────────────────────────────────────────────────
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+function h(tag, attrs = {}, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'text') el.textContent = v;
+    else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
+    else if (k === 'dataset') Object.assign(el.dataset, v);
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function fmtDur(sec) {
+  sec = Math.max(0, sec || 0);
+  const m = Math.floor(sec / 60), s = sec - m * 60;
+  return `${String(m).padStart(2, '0')}:${s.toFixed(1).padStart(4, '0')}`;
+}
+function fmtBytes(n) {
+  if (!n && n !== 0) return '—';
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+function fmtDate(t) {
+  try { return new Date(t).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+  catch { return new Date(t).toISOString().slice(0, 16).replace('T', ' '); }
+}
+const safeName = (s) => (s || 'file').replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim().slice(0, 80) || 'file';
+
+let toastTimer = 0;
+function toast(msg, ms = 2600) {
+  const t = $('#toast');
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, ms);
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('Disalin'); return true; }
+  catch {
+    const ta = h('textarea', { style: { position: 'fixed', top: '-1000px' } }); ta.value = text;
+    document.body.append(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch {}
+    ta.remove();
+    toast(ok ? 'Disalin' : 'Gagal menyalin, salin manual'); return ok;
+  }
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = h('a', { href: url, download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  toast('Mengunduh ' + name);
+}
+async function shareBlob(blob, name, text) {
+  try {
+    const file = new File([blob], name, { type: blob.type || 'application/octet-stream' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name, text: text || name });
+      return true;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return false; }
+  downloadBlob(blob, name);
+  return false;
+}
+async function shareText(text, title) {
+  try { if (navigator.share) { await navigator.share({ title, text }); return; } }
+  catch (e) { if (e && e.name === 'AbortError') return; }
+  copyText(text);
+}
+
+// ─── Pengaturan (localStorage) ───────────────────────────────────────────────
+const SKEY = 'rigsaku:settings';
+const DEFAULTS = {
+  channel: 0, port: '', swapPatch: false,
+  bitDepth: 16, chanMode: 2, latencyMs: '',
+  aiKey: '', aiModel: 'claude-sonnet-5-5', aiWeb: '1',
+  t3kKey: '', t3kArch: '',
+  countIn: 0, metro: 0, monitor: 0,
+  bpm: 120, drumBpm: 100, drumStyle: 1, backingGain: 80,
+  tab: 'kontrol', aiGuitar: '', aiOutput: 'headphone',
+  autoMix: 1, mixTarget: -14, mixRole: 'balance', mixRoom: 0,
+};
+const S = (() => {
+  let v = {};
+  try { v = JSON.parse(localStorage.getItem(SKEY) || '{}') || {}; } catch {}
+  return Object.assign({}, DEFAULTS, v);
+})();
+function saveS() { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch {} }
+
+// ─── IndexedDB ───────────────────────────────────────────────────────────────
+const DB = {
+  db: null, failed: false,
+  open() {
+    if (this.db || this.failed) return Promise.resolve(this.db);
+    return new Promise((res) => {
+      let req;
+      try { req = indexedDB.open('rigsaku', 1); } catch { this.failed = true; return res(null); }
+      req.onupgradeneeded = () => {
+        const d = req.result;
+        for (const s of ['takes', 'tones', 'presets', 'files']) if (!d.objectStoreNames.contains(s)) d.createObjectStore(s, { keyPath: 'id' });
+      };
+      req.onsuccess = () => { this.db = req.result; res(this.db); };
+      req.onerror = () => { this.failed = true; res(null); };
+      req.onblocked = () => { this.failed = true; res(null); };
+    });
+  },
+  async tx(store, mode, fn) {
+    const d = await this.open();
+    if (!d) throw new Error('Penyimpanan browser tidak tersedia');
+    return new Promise((res, rej) => {
+      const t = d.transaction(store, mode); const os = t.objectStore(store);
+      let out; const r = fn(os);
+      if (r && 'onsuccess' in r) r.onsuccess = () => { out = r.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  },
+  put(store, obj) { return this.tx(store, 'readwrite', (os) => os.put(obj)); },
+  get(store, id) { return this.tx(store, 'readonly', (os) => os.get(id)); },
+  del(store, id) { return this.tx(store, 'readwrite', (os) => os.delete(id)); },
+  all(store) { return this.tx(store, 'readonly', (os) => os.getAll()).then((a) => (a || []).sort((x, y) => (y.created || 0) - (x.created || 0))); },
+  clear(store) { return this.tx(store, 'readwrite', (os) => os.clear()); },
+};
+
+// ─── Tab ─────────────────────────────────────────────────────────────────────
+const Tabs = {
+  onShow: {},
+  show(name) {
+    if (!$('#tab-' + name)) name = 'kontrol';
+    $$('.panel').forEach((p) => p.classList.toggle('active', p.id === 'tab-' + name));
+    $$('.tabbar button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    S.tab = name; saveS();
+    window.scrollTo({ top: 0 });
+    if (this.onShow[name]) this.onShow[name]();
+  },
+  init() {
+    $$('.tabbar button').forEach((b) => b.addEventListener('click', () => this.show(b.dataset.tab)));
+  },
+};
+
+// ─── Segmented controls yang terikat ke pengaturan ───────────────────────────
+function bindSeg(name, onChange) {
+  $$(`[data-seg="${name}"]`).forEach((seg) => {
+    const btns = $$('button', seg);
+    const paint = () => btns.forEach((b) => b.classList.toggle('sel', String(S[name]) === b.dataset.v));
+    if (name in S) paint(); else btns.forEach((b) => b.classList.remove('sel'));
+    btns.forEach((b) => b.addEventListener('click', () => {
+      const v = isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v;
+      if (name in DEFAULTS) { S[name] = v; saveS(); paint(); }
+      else btns.forEach((x) => x.classList.toggle('sel', x === b));
+      if (onChange) onChange(v);
+    }));
+  });
+}
+
+// ─── Banner lingkungan ───────────────────────────────────────────────────────
+function envBanners() {
+  const box = $('#envBanners'); box.innerHTML = '';
+  const add = (title, body, err) => box.append(h('div', { class: 'banner' + (err ? ' err' : '') }, h('b', { text: title }), body));
+  const framed = (() => { try { return window.top !== window.self; } catch { return true; } })();
+  if (!window.isSecureContext) {
+    add('Buka dari alamat https', 'MIDI, mikrofon, dan login TONE3000 hanya jalan dari alamat https (misalnya GitHub Pages) atau localhost. Dari file lokal, sebagian fitur akan ditolak browser.', true);
+  }
+  if (framed) {
+    add('Sedang dibuka di dalam bingkai', 'Halaman ini sepertinya tampil di dalam aplikasi lain, yang biasanya memblokir MIDI dan mikrofon. Buka alamatnya langsung di Chrome.', true);
+  }
+  if (!navigator.requestMIDIAccess) {
+    add('Browser ini belum mendukung Web MIDI', 'Pakai Google Chrome (atau Edge) di Android, Windows, macOS, atau ChromeOS. Safari di iPhone/iPad dan Firefox di Android belum bisa mengontrol pedal.', false);
+  }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    add('Perekaman tidak tersedia', 'Browser ini tidak memberi akses input audio.', false);
+  }
+}
+
+// ─── Peta MIDI CC Valeton GP-100 ─────────────────────────────────────────────
+// Sumber: daftar "Control Change" GP-100 (dibagikan pengguna, cocok dengan pola
+// Valeton GP-200). Nilai: on = 127, off = 0; volume 0–100; tempo dua CC.
+const CC = {
+  patchVolume: 7, volumePedal: 11, expression: 13,
+  patchUp: 24, patchDown: 25,
+  PRE: 48, DST: 49, AMP: 50, NR: 51, CAB: 52, EQ: 53, MOD: 54, DLY: 55, RVB: 56,
+  tuner: 57,
+  drumMenu: 58, drumPlay: 59, drumStyle: 60, drumVolume: 61,
+  loopMenu: 62, loopRec: 63, loopPlay: 64, loopErase: 65, loopRecVol: 66, loopPlayVol: 67,
+  fsMode: 68, volPos: 69, bpm1: 70, bpm2: 71, inputLevel: 72, drumBpm1: 73, drumBpm2: 74,
+};
+const CC_NAME = Object.fromEntries(Object.entries({
+  patchVolume: 'Patch volume', volumePedal: 'Volume pedal', expression: 'Expression',
+  patchUp: 'Patch naik', patchDown: 'Patch turun',
+  PRE: 'PRE on/off', DST: 'DST on/off', AMP: 'AMP on/off', NR: 'NR on/off', CAB: 'CAB on/off',
+  EQ: 'EQ on/off', MOD: 'MOD on/off', DLY: 'DLY on/off', RVB: 'RVB on/off', tuner: 'Tuner',
+  drumMenu: 'Drum menu', drumPlay: 'Drum main/stop', drumStyle: 'Pola drum', drumVolume: 'Volume drum',
+  loopMenu: 'Looper menu', loopRec: 'Looper rekam', loopPlay: 'Looper main/stop', loopErase: 'Looper hapus',
+  loopRecVol: 'Looper vol rekam', loopPlayVol: 'Looper vol putar',
+  fsMode: 'Mode footswitch', volPos: 'Vol pedal pre/post', bpm1: 'BPM (1)', bpm2: 'BPM (2)',
+  inputLevel: 'Input level', drumBpm1: 'BPM drum (1)', drumBpm2: 'BPM drum (2)',
+}).map(([k, v]) => [CC[k], v]));
+const ON = 127, OFF = 0;
+const GP100_SYSEX_HEADER = [0xF0, 0x21, 0x25, 0x7F, 0x47, 0x50, 0x2D, 0x64]; // "GP-d" (d = 100)
+
+const MODULES = [
+  { id: 'PRE', desc: 'Comp / boost', hue: '#e0a23a' },
+  { id: 'DST', desc: 'Overdrive / distorsi', hue: '#ef6a3a' },
+  { id: 'AMP', desc: 'Model ampli', hue: '#e8504f' },
+  { id: 'NR', desc: 'Noise gate', hue: '#8aa0b3' },
+  { id: 'CAB', desc: 'Kabinet / IR', hue: '#b38a5a' },
+  { id: 'EQ', desc: 'Equalizer', hue: '#5fb9a8' },
+  { id: 'MOD', desc: 'Chorus, phaser…', hue: '#6f8df0' },
+  { id: 'DLY', desc: 'Delay', hue: '#9c7cf0' },
+  { id: 'RVB', desc: 'Reverb', hue: '#4fb3e8' },
+];
+
+/** Encode BPM 40–250 ke dua CC (pola Valeton: CC-a 0/1 + CC-b nilai). */
+function bpmPair(bpm, ccA, ccB) {
+  const b = clamp(Math.round(bpm), 40, 250);
+  return b <= 127 ? [[ccA, 0], [ccB, b]] : [[ccA, 1], [ccB, b - 128]];
+}
+
+// ─── Lapisan Web MIDI ────────────────────────────────────────────────────────
+const Midi = {
+  access: null, out: null, inp: null, sysex: false,
+  pending: new Map(), timer: 0,
+  get connected() { return !!this.out; },
+
+  async connect() {
+    if (!navigator.requestMIDIAccess) { toast('Browser ini belum mendukung Web MIDI'); return false; }
+    try {
+      this.access = await navigator.requestMIDIAccess({ sysex: true });
+      this.sysex = true;
+    } catch (e) {
+      try { this.access = await navigator.requestMIDIAccess(); this.sysex = false; }
+      catch (e2) {
+        Lab.sys('Akses MIDI ditolak: ' + (e2 && e2.message || e2));
+        toast('Akses MIDI ditolak. Izinkan "perangkat MIDI" untuk situs ini di pengaturan Chrome.', 5000);
+        return false;
+      }
+    }
+    Lab.sys(`Akses MIDI didapat (SysEx: ${this.sysex ? 'ya' : 'tidak'})`);
+    this.access.onstatechange = () => this.pick();
+    this.pick();
+    if (!this.out) toast('GP-100 tidak ditemukan. Cek kabel OTG dan pastikan pedal menyala.', 5000);
+    return !!this.out;
+  },
+
+  pick() {
+    if (!this.access) return;
+    const outs = [...this.access.outputs.values()].filter((p) => p.state !== 'disconnected');
+    const ins = [...this.access.inputs.values()].filter((p) => p.state !== 'disconnected');
+    const isGp = (p) => /gp.?100|valeton|gp100/i.test(`${p.name} ${p.manufacturer}`);
+    const isVirtual = (p) => /through|virtual|rtmidi|loopmidi/i.test(p.name || '');
+    let out = (S.port && outs.find((p) => p.id === S.port)) || outs.find(isGp) || null;
+    if (!out) { const real = outs.filter((p) => !isVirtual(p)); if (real.length === 1) out = real[0]; }
+    let inp = (out && ins.find((p) => p.name === out.name)) || ins.find(isGp) || null;
+    if (!inp) { const real = ins.filter((p) => !isVirtual(p)); if (real.length === 1) inp = real[0]; }
+    if (this.inp && this.inp !== inp) this.inp.onmidimessage = null;
+    // Dengarkan SEMUA input di Lab, tandai yang dari pedal.
+    ins.forEach((p) => { p.onmidimessage = (ev) => Lab.inMsg(ev.data, p); });
+    const changed = out !== this.out;
+    this.out = out; this.inp = inp;
+    if (changed) Lab.sys(out ? `Output: ${out.name}` : 'Output MIDI terputus');
+    UI.midiState();
+    Lab.ports(outs, ins);
+    Settings.fillPorts(outs);
+  },
+
+  send(bytes, quiet) {
+    if (!this.out) { if (!quiet) toast('Belum tersambung ke GP-100'); return false; }
+    try { this.out.send(bytes); Lab.outMsg(bytes); return true; }
+    catch (e) { Lab.sys('Gagal kirim: ' + e.message); toast('Gagal mengirim ke pedal'); return false; }
+  },
+  cc(cc, v) { return this.send([0xB0 | (S.channel & 15), cc & 127, clamp(Math.round(v), 0, 127)]); },
+  pc(n) { return this.send([0xC0 | (S.channel & 15), n & 127]); },
+  /** CC untuk slider: kirim paling sering tiap 30 ms per nomor CC. */
+  ccSoft(cc, v) {
+    this.pending.set(cc, v);
+    if (this.timer) return;
+    this.timer = setTimeout(() => {
+      this.timer = 0;
+      const items = [...this.pending]; this.pending.clear();
+      for (const [c, val] of items) this.cc(c, val);
+    }, 30);
+  },
+  identity() {
+    if (!this.sysex) { toast('Izin SysEx tidak diberikan, jadi pesan ini tidak bisa dikirim'); return; }
+    this.send([0xF0, 0x7E, 0x7F, 0x06, 0x01, 0xF7]);
+  },
+};
+
+// ─── UI status & kontrol pedal ───────────────────────────────────────────────
+const UI = {
+  midiState() {
+    const on = Midi.connected;
+    $('#pillMidi').classList.toggle('on', on);
+    $('#midiPortName').textContent = on ? Midi.out.name : (Midi.access ? 'GP-100 tidak terdeteksi' : 'Belum tersambung');
+    $('#btnConnect').textContent = on ? 'Tersambung ✓' : (Midi.access ? 'Cari ulang' : 'Sambungkan GP-100');
+    $('#btnStage').disabled = !on;
+  },
+  audioState(on, rec) {
+    const p = $('#pillAudio');
+    p.classList.toggle('on', !!on && !rec);
+    p.classList.toggle('rec', !!rec);
+  },
+};
+
+const Control = {
+  mods: Object.fromEntries(MODULES.map((m) => [m.id, null])), // null = belum diketahui
+  taps: [],
+
+  init() {
+    $('#btnConnect').addEventListener('click', () => {
+      if (Midi.access) { Midi.pick(); if (!Midi.out) toast('GP-100 belum terdeteksi'); }
+      else Midi.connect();
+    });
+    $$('[data-patch]').forEach((b) => b.addEventListener('click', () => this.patch(b.dataset.patch)));
+    this.renderMods();
+    $('#btnModsReset').addEventListener('click', () => { this.resetMods(); toast('Lampu modul direset'); });
+
+    // Slider CC
+    const outs = { slPatchVol: 'oPatchVol', slVolPedal: 'oVolPedal', slExp: 'oExp', slDrumVol: 'oDrumVol', slLoopRec: 'oLoopRec', slLoopPlay: 'oLoopPlay', slInput: 'oInput' };
+    for (const [id, oid] of Object.entries(outs)) {
+      const el = $('#' + id);
+      el.addEventListener('input', () => {
+        $('#' + oid).textContent = el.value;
+        Midi.ccSoft(CC[el.dataset.cc], +el.value);
+      });
+    }
+
+    // BPM
+    const bpm = $('#bpm'); bpm.value = S.bpm;
+    const setBpm = (v, send) => {
+      S.bpm = clamp(Math.round(v) || 120, 40, 250); bpm.value = S.bpm; saveS();
+      $('#stageBpm').textContent = S.bpm;
+      if (send) this.sendBpm();
+    };
+    this.setBpm = setBpm;
+    $$('[data-bpm]').forEach((b) => b.addEventListener('click', () => setBpm(S.bpm + +b.dataset.bpm)));
+    bpm.addEventListener('change', () => setBpm(+bpm.value));
+    $('#btnSendBpm').addEventListener('click', () => this.sendBpm(true));
+    $('#btnTap').addEventListener('click', () => this.tap());
+    $('#btnTuner').addEventListener('click', (e) => this.toggleBtn(e.currentTarget, CC.tuner));
+
+    // Drum
+    const ds = $('#drumStyle'); ds.value = S.drumStyle;
+    const setStyle = (v) => { S.drumStyle = clamp(Math.round(v) || 1, 1, 99); ds.value = S.drumStyle; saveS(); Midi.cc(CC.drumStyle, S.drumStyle - 1); };
+    $$('[data-drum]').forEach((b) => b.addEventListener('click', () => setStyle(S.drumStyle + +b.dataset.drum)));
+    ds.addEventListener('change', () => setStyle(+ds.value));
+    const db = $('#drumBpm'); db.value = S.drumBpm;
+    const setDb = (v) => { S.drumBpm = clamp(Math.round(v) || 100, 40, 250); db.value = S.drumBpm; saveS(); this.sendPair(S.drumBpm, CC.drumBpm1, CC.drumBpm2); };
+    $$('[data-dbpm]').forEach((b) => b.addEventListener('click', () => setDb(S.drumBpm + +b.dataset.dbpm)));
+    db.addEventListener('change', () => setDb(+db.value));
+    $('#btnDrumMenu').addEventListener('click', (e) => this.toggleBtn(e.currentTarget, CC.drumMenu));
+    $('#btnDrumPlay').addEventListener('click', (e) => this.toggleBtn(e.currentTarget, CC.drumPlay, '■ Stop', '▶ Main'));
+
+    // Looper
+    $('#btnLoopMenu').addEventListener('click', (e) => this.toggleBtn(e.currentTarget, CC.loopMenu));
+    $('#btnLoopRec').addEventListener('click', () => Midi.cc(CC.loopRec, ON));
+    $('#btnLoopPlay').addEventListener('click', (e) => this.toggleBtn(e.currentTarget, CC.loopPlay));
+    $('#btnLoopErase').addEventListener('click', () => Midi.cc(CC.loopErase, ON));
+
+    // Global
+    bindSeg('fsMode', (v) => Midi.cc(CC.fsMode, v));
+    bindSeg('volPos', (v) => Midi.cc(CC.volPos, v));
+
+    // Mode panggung
+    $('#btnStage').addEventListener('click', () => Stage.open());
+    $('#btnStageExit').addEventListener('click', () => Stage.close());
+    $('#btnStageTap').addEventListener('click', () => this.tap());
+    $('#btnStageTuner').addEventListener('click', (e) => this.toggleBtn(e.currentTarget, CC.tuner));
+  },
+
+  patch(dir) {
+    let up = dir === 'up';
+    if (S.swapPatch) up = !up;
+    if (!Midi.cc(up ? CC.patchUp : CC.patchDown, ON)) return;
+    this.resetMods();
+    const lbl = $('#patchLabel');
+    lbl.textContent = dir === 'up' ? 'Berikutnya ▶' : '◀ Sebelumnya';
+    clearTimeout(this._pt); this._pt = setTimeout(() => { lbl.textContent = '—'; }, 900);
+  },
+
+  renderMods() {
+    for (const host of [$('#modules'), $('#stageModules')]) {
+      host.innerHTML = '';
+      for (const m of MODULES) {
+        const b = h('button', { class: 'mod', style: { '--hue': m.hue }, dataset: { mod: m.id }, 'aria-pressed': 'mixed' },
+          h('i', { class: 'led' }), h('b', { text: m.id }), h('span', { text: m.desc }));
+        b.addEventListener('click', () => this.toggleMod(m.id));
+        host.append(b);
+      }
+    }
+    this.paintMods();
+  },
+  paintMods() {
+    $$('.mod').forEach((b) => {
+      const st = this.mods[b.dataset.mod];
+      b.classList.toggle('on', st === true);
+      b.classList.toggle('off', st === false);
+      b.setAttribute('aria-pressed', st == null ? 'mixed' : String(st));
+    });
+  },
+  toggleMod(id) { this.setMod(id, this.mods[id] !== true); },
+  setMod(id, on) {
+    if (!Midi.cc(CC[id], on ? ON : OFF)) return false;
+    this.mods[id] = on; this.paintMods(); return true;
+  },
+  resetMods() { for (const k in this.mods) this.mods[k] = null; this.paintMods(); },
+
+  toggleBtn(btn, cc, onText, offText) {
+    const next = btn.getAttribute('aria-pressed') !== 'true';
+    if (!Midi.cc(cc, next ? ON : OFF)) return;
+    btn.setAttribute('aria-pressed', String(next));
+    btn.classList.toggle('primary', next);
+    if (onText) btn.textContent = next ? onText : offText;
+  },
+  sendPair(bpm, a, b) { for (const [c, v] of bpmPair(bpm, a, b)) if (!Midi.cc(c, v)) return false; return true; },
+  sendBpm(announce) { if (this.sendPair(S.bpm, CC.bpm1, CC.bpm2) && announce) toast(`BPM ${S.bpm} dikirim`); },
+
+  tap() {
+    const now = performance.now();
+    this.taps = this.taps.filter((t) => now - t < 2500); this.taps.push(now);
+    if (this.taps.length >= 2) {
+      const iv = []; for (let i = 1; i < this.taps.length; i++) iv.push(this.taps[i] - this.taps[i - 1]);
+      const recent = iv.slice(-4); const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+      this.setBpm(60000 / avg);
+      clearTimeout(this._tapSend);
+      this._tapSend = setTimeout(() => { if (Midi.connected) this.sendBpm(); }, 600);
+    }
+  },
+};
+
+const Stage = {
+  lock: null,
+  async open() {
+    $('#stage').hidden = false; $('#stageBpm').textContent = S.bpm;
+    try { await document.documentElement.requestFullscreen?.(); } catch {}
+    try { this.lock = await navigator.wakeLock?.request('screen'); } catch {}
+  },
+  close() {
+    $('#stage').hidden = true;
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch {}
+    try { this.lock && this.lock.release(); } catch {} this.lock = null;
+  },
+};
+
+// ─── DSP utilitas: WAV, loudness (ITU-R BS.1770), peak ───────────────────────
+const DSP = {
+  encodeWAV(chs, sr, bits) {
+    const nch = chs.length, len = chs[0].length, bps = bits / 8;
+    const buf = new ArrayBuffer(44 + len * nch * bps); const v = new DataView(buf);
+    const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+    ws(0, 'RIFF'); v.setUint32(4, 36 + len * nch * bps, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, nch, true);
+    v.setUint32(24, sr, true); v.setUint32(28, sr * nch * bps, true); v.setUint16(32, nch * bps, true);
+    v.setUint16(34, bits, true); ws(36, 'data'); v.setUint32(40, len * nch * bps, true);
+    let o = 44;
+    for (let i = 0; i < len; i++) {
+      for (let c = 0; c < nch; c++) {
+        const s = clamp(chs[c][i], -1, 1);
+        if (bits === 16) { v.setInt16(o, s < 0 ? s * 0x8000 : s * 0x7FFF, true); o += 2; }
+        else { const x = Math.round(s < 0 ? s * 0x800000 : s * 0x7FFFFF); v.setUint8(o, x & 255); v.setUint8(o + 1, (x >> 8) & 255); v.setUint8(o + 2, (x >> 16) & 255); o += 3; }
+      }
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  },
+  bufferChannels(ab) { const a = []; for (let c = 0; c < ab.numberOfChannels; c++) a.push(ab.getChannelData(c)); return a; },
+  peaks(chs, n = 160) {
+    const len = chs[0].length, step = Math.max(1, Math.floor(len / n)), out = [];
+    for (let i = 0; i < n; i++) {
+      let m = 0; const s = i * step, e = Math.min(len, s + step);
+      for (const ch of chs) for (let j = s; j < e; j += 4) { const a = Math.abs(ch[j]); if (a > m) m = a; }
+      out.push(+m.toFixed(3));
+    }
+    return out;
+  },
+  peak(chs) { let m = 0; for (const ch of chs) for (let i = 0; i < ch.length; i++) { const a = Math.abs(ch[i]); if (a > m) m = a; } return m; },
+  db: (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity),
+  biquad(type, G, Q, fc, sr) {
+    const A = Math.pow(10, G / 40), w0 = 2 * Math.PI * fc / sr, cs = Math.cos(w0), al = Math.sin(w0) / (2 * Q);
+    let b0, b1, b2, a0, a1, a2;
+    if (type === 'shelf') {
+      const sq = 2 * Math.sqrt(A) * al;
+      b0 = A * ((A + 1) + (A - 1) * cs + sq); b1 = -2 * A * ((A - 1) + (A + 1) * cs); b2 = A * ((A + 1) + (A - 1) * cs - sq);
+      a0 = (A + 1) - (A - 1) * cs + sq; a1 = 2 * ((A - 1) - (A + 1) * cs); a2 = (A + 1) - (A - 1) * cs - sq;
+    } else {
+      b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = (1 + cs) / 2; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al;
+    }
+    return [b0 / a0, b1 / a0, b2 / a0, a1 / a0, a2 / a0];
+  },
+  filt(x, c) {
+    const y = new Float32Array(x.length); let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    const [b0, b1, b2, a1, a2] = c;
+    for (let i = 0; i < x.length; i++) { const xi = x[i]; const yi = b0 * xi + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = xi; y2 = y1; y1 = yi; y[i] = yi; }
+    return y;
+  },
+  /** Integrated loudness (LUFS) per BS.1770-4 dengan gating absolut & relatif. */
+  lufs(chs, sr) {
+    const shelf = this.biquad('shelf', 3.999843853973347, 0.7071752369554196, 1681.974450955533, sr);
+    const hp = this.biquad('hp', 0, 0.5003270373238773, 38.13547087602444, sr);
+    const kw = chs.map((ch) => this.filt(this.filt(ch, shelf), hp));
+    const blk = Math.round(0.4 * sr), hop = Math.round(0.1 * sr);
+    const z = [];
+    for (let s = 0; s + blk <= kw[0].length; s += hop) {
+      let sum = 0;
+      for (const ch of kw) { let a = 0; for (let i = s; i < s + blk; i++) a += ch[i] * ch[i]; sum += a / blk; }
+      z.push(sum);
+    }
+    if (!z.length) return -Infinity;
+    const L = (v) => -0.691 + 10 * Math.log10(v);
+    const absG = z.filter((v) => L(v) > -70);
+    if (!absG.length) return -Infinity;
+    const relT = L(absG.reduce((a, b) => a + b, 0) / absG.length) - 10;
+    const g = absG.filter((v) => L(v) > relT);
+    return g.length ? L(g.reduce((a, b) => a + b, 0) / g.length) : -Infinity;
+  },
+  /** Cari awal & akhir bagian yang berbunyi (di atas ambang relatif puncak). */
+  activeRange(chs, sr, thrDb = -42) {
+    const pk = this.peak(chs); if (!pk) return [0, chs[0].length];
+    const thr = pk * Math.pow(10, thrDb / 20), win = Math.round(0.01 * sr), n = chs[0].length;
+    const loud = (i) => { for (const ch of chs) for (let j = i; j < Math.min(n, i + win); j++) if (Math.abs(ch[j]) > thr) return true; return false; };
+    let s = 0; while (s < n && !loud(s)) s += win;
+    let e = n - win; while (e > s && !loud(e)) e -= win;
+    return [s, Math.min(n, e + win)];
+  },
+  /** Brickwall limiter look-ahead (5 ms) dengan release halus. Mengembalikan kanal baru + reduksi maksimum (dB). */
+  limit(chs, sr, ceiling, gainLin = 1, lookMs = 5, relMs = 90) {
+    const n = chs[0].length, L = Math.max(1, Math.round(lookMs / 1000 * sr));
+    const g = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      let m = 0; for (const ch of chs) { const a = Math.abs(ch[i] * gainLin); if (a > m) m = a; }
+      g[i] = m > ceiling ? ceiling / m : 1;
+    }
+    // minimum geser ke depan: m[i] = min(g[i..i+L])
+    const mn = new Float32Array(n); const dq = new Int32Array(n); let hd = 0, tl = 0;
+    for (let i = n - 1; i >= 0; i--) {
+      while (tl > hd && g[dq[tl - 1]] >= g[i]) tl--;
+      dq[tl++] = i;
+      while (dq[hd] > i + L) hd++;
+      mn[i] = g[dq[hd]];
+    }
+    // rata-rata geser ke belakang (attack halus), lalu release eksponensial
+    const env = new Float32Array(n); let acc = 0; const rc = 1 - Math.exp(-1 / (relMs / 1000 * sr)); let r = 1, minG = 1;
+    for (let i = 0; i < n; i++) {
+      acc += mn[i]; if (i >= L) acc -= mn[i - L];
+      const e = acc / Math.min(i + 1, L);
+      r = Math.min(e, r + (1 - r) * rc);
+      env[i] = r; if (r < minG) minG = r;
+    }
+    const out = chs.map((ch) => { const o = new Float32Array(n); for (let i = 0; i < n; i++) o[i] = clamp(ch[i] * gainLin * env[i], -ceiling, ceiling); return o; });
+    return { chs: out, grDb: DSP.db(minG) };
+  },
+  roomIR(ctx, sec = 1.1) {
+    const sr = ctx.sampleRate, len = Math.round(sec * sr), ir = ctx.createBuffer(2, len, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < len; i++) { const t = i / sr; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2) * Math.exp(-t * 3.2) * (t < 0.004 ? t / 0.004 : 1); }
+    }
+    return ir;
+  },
+};
+
+const RECORDER_WORKLET = `
+class RsRec extends AudioWorkletProcessor {
+  constructor() {
+    super(); this.rec = false; this.size = 16384; this.alloc(); this.pk = [0, 0]; this.cnt = 0;
+    this.port.onmessage = (e) => {
+      const d = e.data;
+      if (d.cmd === 'start') { this.alloc(); this.rec = true; this.port.postMessage({ type: 'started', frame: currentFrame }); }
+      else if (d.cmd === 'stop') { this.flush(); this.rec = false; this.port.postMessage({ type: 'stopped', frame: currentFrame }); }
+    };
+  }
+  alloc() { this.buf = [new Float32Array(this.size), new Float32Array(this.size)]; this.pos = 0; }
+  flush() {
+    if (this.pos > 0) { const o = [this.buf[0].slice(0, this.pos), this.buf[1].slice(0, this.pos)]; this.port.postMessage({ type: 'data', ch: o }, [o[0].buffer, o[1].buffer]); }
+    this.alloc();
+  }
+  process(inputs, outputs) {
+    const inp = inputs[0], out = outputs[0];
+    const L = inp && inp[0], R = (inp && inp[1]) || L;
+    if (L) {
+      for (let i = 0; i < L.length; i++) {
+        const l = L[i], r = R[i];
+        const al = l < 0 ? -l : l, ar = r < 0 ? -r : r;
+        if (al > this.pk[0]) this.pk[0] = al; if (ar > this.pk[1]) this.pk[1] = ar;
+        if (this.rec) { this.buf[0][this.pos] = l; this.buf[1][this.pos] = r; if (++this.pos === this.size) this.flush(); }
+      }
+      if (out && out[0]) { out[0].set(L); if (out[1]) out[1].set(R); }
+      this.cnt += L.length;
+      if (this.cnt >= 1024) { this.port.postMessage({ type: 'peak', l: this.pk[0], r: this.pk[1] }); this.pk = [0, 0]; this.cnt = 0; }
+    }
+    return true;
+  }
+}
+registerProcessor('rs-rec', RsRec);`;
+
+// ─── Perekam ─────────────────────────────────────────────────────────────────
+const Rec = {
+  ctx: null, stream: null, src: null, node: null, mon: null,
+  recording: false, counting: false, chunks: [], startFrame: 0, alignTime: 0,
+  backing: { buffer: null, name: '', id: null, blob: null }, backingSrc: null, backingGain: null,
+  metroTimer: 0, clicks: [], hold: [0, 0], holdT: [0, 0], lock: null,
+
+  async ensureCtx() {
+    if (this.ctx) { if (this.ctx.state !== 'running') await this.ctx.resume(); return this.ctx; }
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
+    const url = URL.createObjectURL(new Blob([RECORDER_WORKLET], { type: 'application/javascript' }));
+    await this.ctx.audioWorklet.addModule(url);
+    this.backingGain = this.ctx.createGain(); this.backingGain.gain.value = S.backingGain / 100;
+    this.backingGain.connect(this.ctx.destination);
+    await this.ctx.resume();
+    return this.ctx;
+  },
+
+  async enable(deviceId) {
+    if (!navigator.mediaDevices?.getUserMedia) { toast('Perekaman tidak didukung browser ini'); return; }
+    try {
+      await this.ensureCtx();
+      if (this.stream) this.stream.getTracks().forEach((t) => t.stop());
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: {
+        deviceId: deviceId ? { exact: deviceId } : undefined,
+        echoCancellation: false, noiseSuppression: false, autoGainControl: false,
+        channelCount: { ideal: 2 }, sampleRate: { ideal: 48000 },
+      } });
+    } catch (e) {
+      const m = e && e.name === 'NotAllowedError' ? 'Izin mikrofon/audio ditolak. Izinkan di pengaturan situs Chrome.' : 'Tidak bisa membuka input audio: ' + (e.message || e.name);
+      toast(m, 5000); return;
+    }
+    if (this.src) try { this.src.disconnect(); } catch {}
+    if (this.node) try { this.node.disconnect(); } catch {}
+    this.src = this.ctx.createMediaStreamSource(this.stream);
+    this.node = new AudioWorkletNode(this.ctx, 'rs-rec', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: 'explicit' });
+    this.node.port.onmessage = (e) => this.onMsg(e.data);
+    this.mon = this.ctx.createGain(); this.mon.gain.value = S.monitor ? 1 : 0;
+    this.src.connect(this.node); this.node.connect(this.mon); this.mon.connect(this.ctx.destination);
+    const track = this.stream.getAudioTracks()[0];
+    $('#audioDevName').textContent = `${track.label || 'Input audio'} · ${this.ctx.sampleRate / 1000} kHz`;
+    UI.audioState(true, false);
+    $('#btnRec').disabled = false; $('#recHint').textContent = 'Siap merekam';
+    $('#btnAudio').textContent = 'Audio aktif ✓';
+    await this.listDevices(track.getSettings().deviceId);
+    if (!/usb|gp|valeton/i.test(track.label || '')) toast('Input yang aktif sepertinya bukan GP-100. Pilih perangkat USB di daftar.', 5000);
+  },
+
+  async listDevices(current) {
+    try {
+      const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+      const sel = $('#audioDev'); sel.innerHTML = '';
+      devs.forEach((d, i) => sel.append(h('option', { value: d.deviceId, text: d.label || `Input ${i + 1}`, selected: d.deviceId === current })));
+      sel.hidden = devs.length < 2;
+      if (!current) { const usb = devs.find((d) => /usb|gp|valeton/i.test(d.label)); if (usb) { sel.value = usb.deviceId; } }
+    } catch {}
+  },
+
+  onMsg(d) {
+    if (d.type === 'peak') this.meter(d.l, d.r);
+    else if (d.type === 'data') this.chunks.push(d.ch);
+    else if (d.type === 'started') this.startFrame = d.frame;
+    else if (d.type === 'stopped') this.finish();
+  },
+
+  meter(l, r) {
+    const now = performance.now();
+    [[l, '#mL', '#hL', '#clipL', 0], [r, '#mR', '#hR', '#clipR', 1]].forEach(([v, m, hd, cl, i]) => {
+      const dbv = DSP.db(v); const pct = clamp((dbv + 60) / 60 * 100, 0, 100);
+      const fill = $(m); fill.style.width = pct + '%'; fill.style.setProperty('--mw', (pct ? 100 / pct * 100 : 100) + '%');
+      if (pct >= this.hold[i] || now - this.holdT[i] > 1500) { this.hold[i] = pct; this.holdT[i] = now; }
+      $(hd).style.left = `calc(${this.hold[i]}% - 1px)`;
+      if (v >= 0.989) { $(cl).classList.add('hot'); clearTimeout(this['ct' + i]); this['ct' + i] = setTimeout(() => $(cl).classList.remove('hot'), 1500); }
+    });
+  },
+
+  click(t, accent) {
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.frequency.value = accent ? 1600 : 1050; o.type = 'square';
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.25, t + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + 0.06);
+    this.clicks.push(o);
+  },
+
+  async start() {
+    if (!this.node) { toast('Aktifkan audio dulu'); return; }
+    await this.ensureCtx();
+    const ctx = this.ctx, spb = 60 / S.bpm, beats = 4 * (S.countIn || 0);
+    const t0 = ctx.currentTime + 0.12, countDur = beats * spb;
+    for (let i = 0; i < beats; i++) this.click(t0 + i * spb, i % 4 === 0);
+    this.alignTime = t0 + countDur;
+    if (this.backing.buffer) {
+      const s = ctx.createBufferSource(); s.buffer = this.backing.buffer; s.connect(this.backingGain);
+      s.start(this.alignTime); this.backingSrc = s;
+    }
+    if (S.metro) {
+      let n = 0; const sched = () => {
+        while (this.alignTime + n * spb < ctx.currentTime + 0.2) { this.click(this.alignTime + n * spb, n % 4 === 0); n++; }
+      };
+      sched(); this.metroTimer = setInterval(sched, 50);
+    }
+    this.chunks = []; this.recording = true; this.counting = beats > 0;
+    this.node.port.postMessage({ cmd: 'start' });
+    try { this.lock = await navigator.wakeLock?.request('screen'); } catch {}
+    $('#btnRec').classList.add('live'); $('#btnRec').classList.toggle('count', this.counting);
+    $('#btnRec').setAttribute('aria-label', 'Berhenti merekam');
+    UI.audioState(true, true);
+    const tick = () => {
+      if (!this.recording) return;
+      const el = ctx.currentTime - this.alignTime;
+      if (el < 0) { $('#recTime').textContent = `-${Math.ceil(-el / spb)}`; $('#recHint').textContent = 'Hitungan masuk…'; }
+      else {
+        if (this.counting) { this.counting = false; $('#btnRec').classList.remove('count'); }
+        $('#recTime').textContent = fmtDur(el); $('#recHint').textContent = this.backing.buffer ? 'Merekam dengan backing…' : 'Merekam…';
+      }
+      requestAnimationFrame(tick);
+    };
+    tick();
+  },
+
+  stop() {
+    if (!this.recording) return;
+    this.recording = false;
+    this.node.port.postMessage({ cmd: 'stop' });
+    clearInterval(this.metroTimer);
+    this.clicks.forEach((o) => { try { o.stop(); } catch {} }); this.clicks = [];
+    if (this.backingSrc) { try { this.backingSrc.stop(); } catch {} this.backingSrc = null; }
+    try { this.lock && this.lock.release(); } catch {} this.lock = null;
+    $('#btnRec').classList.remove('live', 'count'); $('#btnRec').setAttribute('aria-label', 'Mulai rekam');
+    $('#recHint').textContent = 'Menyimpan…';
+    UI.audioState(true, false);
+  },
+
+  async finish() {
+    const sr = this.ctx.sampleRate;
+    const total = this.chunks.reduce((a, c) => a + c[0].length, 0);
+    const trim = clamp(Math.round(this.alignTime * sr - this.startFrame), 0, total);
+    const len = total - trim;
+    if (len < sr * 0.3) { $('#recHint').textContent = 'Terlalu pendek, tidak disimpan'; return; }
+    const L = new Float32Array(len), R = new Float32Array(len);
+    let o = -trim;
+    for (const [a, b] of this.chunks) {
+      for (let i = 0; i < a.length; i++, o++) if (o >= 0) { L[o] = a[i]; R[o] = b[i]; }
+    }
+    this.chunks = [];
+    const chs = S.chanMode === 1 ? [L.map((v, i) => (v + R[i]) / 2)] : [L, R];
+    const blob = DSP.encodeWAV(chs, sr, S.bitDepth);
+    const n = (await DB.all('takes').catch(() => [])).length + 1;
+    const take = {
+      id: uid(), created: Date.now(), name: `Take ${n}`, sr, ch: chs.length, bits: S.bitDepth,
+      dur: len / sr, blob, peaks: DSP.peaks(chs), size: blob.size,
+      backingId: this.backing.id, backingName: this.backing.name, backingGain: S.backingGain,
+      latencyMs: this.latencyMs(),
+    };
+    try { await DB.put('takes', take); } catch (e) { toast('Gagal menyimpan: ' + e.message, 5000); }
+    $('#recHint').textContent = `Tersimpan sebagai ${take.name}`;
+    $('#recTime').textContent = fmtDur(take.dur);
+    await Takes.render();
+    if (S.autoMix) Takes.autoMix(take.id, true);
+  },
+
+  latencyMs() {
+    if (S.latencyMs !== '' && !isNaN(+S.latencyMs)) return +S.latencyMs;
+    const ctx = this.ctx; let ms = ((ctx?.outputLatency || 0) + (ctx?.baseLatency || 0)) * 1000;
+    try { const l = this.stream?.getAudioTracks()[0]?.getSettings()?.latency; ms += (typeof l === 'number' ? l * 1000 : 10); } catch { ms += 10; }
+    return Math.round(clamp(ms, 0, 500));
+  },
+
+  async setBacking(file) {
+    try {
+      await this.ensureCtx();
+      const buf = await this.ctx.decodeAudioData(await file.arrayBuffer());
+      const id = uid();
+      await DB.put('files', { id, created: Date.now(), kind: 'backing', name: file.name, blob: file }).catch(() => {});
+      this.backing = { buffer: buf, name: file.name, id, blob: file };
+      $('#backingName').textContent = `${file.name} · ${fmtDur(buf.duration)}`;
+      $('#btnBackingClear').hidden = false;
+    } catch (e) { toast('File audio tidak bisa dibaca: ' + (e.message || e.name), 5000); }
+  },
+  clearBacking() {
+    this.backing = { buffer: null, name: '', id: null, blob: null };
+    $('#backingName').textContent = 'Belum ada'; $('#btnBackingClear').hidden = true;
+  },
+
+  init() {
+    $('#btnAudio').addEventListener('click', () => this.enable($('#audioDev').value || undefined));
+    $('#audioDev').addEventListener('change', (e) => this.enable(e.target.value));
+    $('#btnRec').addEventListener('click', () => (this.recording ? this.stop() : this.start()));
+    $('#fileBacking').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) this.setBacking(f); e.target.value = ''; });
+    $('#btnBackingClear').addEventListener('click', () => this.clearBacking());
+    const sb = $('#slBacking'); sb.value = S.backingGain; $('#oBacking').textContent = S.backingGain;
+    sb.addEventListener('input', () => { S.backingGain = +sb.value; saveS(); $('#oBacking').textContent = sb.value; if (this.backingGain) this.backingGain.gain.value = sb.value / 100; });
+    bindSeg('countIn'); bindSeg('metro');
+    bindSeg('monitor', (v) => { if (this.mon) this.mon.gain.value = v ? 1 : 0; });
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && this.recording && this.lock == null) { try { this.lock = await navigator.wakeLock?.request('screen'); } catch {} }
+    });
+  },
+};
+
+// ─── Daftar take + Auto Mix ──────────────────────────────────────────────────
+const Takes = {
+  player: null, playingId: null, busy: new Set(),
+
+  async render() {
+    const list = $('#takeList'); let takes = [];
+    try { takes = await DB.all('takes'); } catch {}
+    $('#takeCount').textContent = takes.length ? `${takes.length} rekaman` : '';
+    list.innerHTML = '';
+    if (!takes.length) list.append(h('div', { class: 'empty', text: 'Belum ada rekaman. Aktifkan audio, lalu tekan tombol merah.' }));
+    for (const t of takes) list.append(this.item(t));
+    IRTest.fillTakes(takes);
+  },
+
+  item(t) {
+    const cv = h('canvas', { class: 'wave', width: 640, height: 88 });
+    requestAnimationFrame(() => this.drawWave(cv, t.peaks));
+    const mixInfo = t.mix
+      ? h('small', { text: `Auto mix: ${t.mix.lufs.toFixed(1)} LUFS · puncak ${t.mix.peakDb.toFixed(1)} dB${t.mix.notes ? ' · ' + t.mix.notes : ''}` })
+      : (this.busy.has(t.id) ? h('small', {}, h('span', { class: 'spin', style: { width: '12px', height: '12px', verticalAlign: '-2px' } }), ' Auto mix sedang diproses…') : null);
+    const which = t.mix ? 'mix' : 'raw';
+    const ver = t.mix ? h('div', { class: 'seg' },
+      h('button', { class: 'sel', dataset: { v: 'mix' }, text: 'Auto mix' }),
+      h('button', { dataset: { v: 'raw' }, text: 'Asli' })) : null;
+    let sel = which;
+    if (ver) $$('button', ver).forEach((b) => b.addEventListener('click', () => { sel = b.dataset.v; $$('button', ver).forEach((x) => x.classList.toggle('sel', x === b)); if (this.playingId === t.id) this.play(t, sel); }));
+    const blobOf = () => (sel === 'mix' && t.mix ? t.mix.blob : t.blob);
+    const fname = () => safeName(`${t.name}${sel === 'mix' && t.mix ? ' (auto mix)' : ''}`) + '.wav';
+    const confirmRow = h('div', { class: 'row', hidden: true },
+      h('span', { class: 'note grow', text: 'Hapus rekaman ini?' }),
+      h('button', { class: 'btn danger sm', text: 'Hapus', onclick: async () => { await DB.del('takes', t.id); if (this.playingId === t.id) this.stopPlay(); this.render(); } }),
+      h('button', { class: 'btn sm', text: 'Batal', onclick: () => { confirmRow.hidden = true; } }));
+    const nameEl = h('b', { text: t.name });
+    const el = h('div', { class: 'item' },
+      h('div', { class: 'item-h' },
+        h('div', { class: 't' }, nameEl,
+          h('small', { text: `${fmtDur(t.dur)} · ${t.sr / 1000} kHz · ${t.bits}-bit · ${t.ch === 1 ? 'mono' : 'stereo'} · ${fmtDate(t.created)}${t.backingName ? ' · backing: ' + t.backingName : ''}` }),
+          mixInfo ? h('div', {}, mixInfo) : null)),
+      ver ? h('div', { class: 'row' }, h('span', { class: 'note', text: 'Versi' }), ver) : null,
+      cv,
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm primary', dataset: { play: t.id }, text: this.playingId === t.id ? '■ Stop' : '▶ Putar', onclick: () => (this.playingId === t.id ? this.stopPlay() : this.play(t, sel)) }),
+        h('button', { class: 'btn sm', text: 'Unduh WAV', onclick: () => downloadBlob(blobOf(), fname()) }),
+        h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareBlob(blobOf(), fname(), t.name) }),
+        h('button', { class: 'btn sm', text: t.mix ? 'Mix ulang' : 'Auto mix', disabled: this.busy.has(t.id), onclick: () => this.autoMix(t.id) }),
+        h('button', { class: 'btn sm ghost', text: 'Ganti nama', onclick: () => this.rename(t, nameEl) }),
+        h('button', { class: 'btn sm ghost danger', text: 'Hapus', onclick: () => { confirmRow.hidden = false; } })),
+      confirmRow);
+    return el;
+  },
+
+  drawWave(cv, peaks) {
+    const c = cv.getContext('2d'); if (!c || !peaks) return;
+    const st = getComputedStyle(document.documentElement);
+    const w = cv.width, hh = cv.height, mid = hh / 2;
+    c.clearRect(0, 0, w, hh); c.fillStyle = st.getPropertyValue('--accent').trim() || '#ffb23f';
+    const bw = w / peaks.length;
+    peaks.forEach((p, i) => { const y = Math.max(1, p * mid * 0.95); c.fillRect(i * bw + 0.5, mid - y, Math.max(1, bw - 1.5), y * 2); });
+  },
+
+  rename(t, nameEl) {
+    const inp = h('input', { class: 'input', value: t.name });
+    nameEl.replaceWith(inp); inp.focus(); inp.select();
+    const done = async () => { t.name = inp.value.trim() || t.name; await DB.put('takes', t).catch(() => {}); this.render(); };
+    inp.addEventListener('blur', done); inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') inp.blur(); });
+  },
+
+  play(t, which) {
+    this.stopPlay();
+    const blob = which === 'mix' && t.mix ? t.mix.blob : t.blob;
+    const url = URL.createObjectURL(blob);
+    const a = new Audio(url); this.player = a; this.playingId = t.id;
+    a.onended = () => this.stopPlay();
+    a.play().catch(() => this.stopPlay());
+    this.paintPlay();
+  },
+  stopPlay() {
+    if (this.player) { this.player.pause(); URL.revokeObjectURL(this.player.src); this.player = null; }
+    this.playingId = null; this.paintPlay();
+  },
+  paintPlay() { $$('[data-play]').forEach((b) => { b.textContent = b.dataset.play === this.playingId ? '■ Stop' : '▶ Putar'; }); },
+
+  async decode(blob) {
+    const ctx = await Rec.ensureCtx();
+    return ctx.decodeAudioData(await blob.arrayBuffer());
+  },
+
+  /** Auto mix: potong diam, HPF, kompres halus, seimbangkan dengan backing, normalisasi LUFS, limiter, fade. */
+  async autoMix(id, silent) {
+    if (this.busy.has(id)) return;
+    this.busy.add(id); this.render();
+    try {
+      const t = await DB.get('takes', id); if (!t) return;
+      const g = await this.decode(t.blob);
+      const sr = g.sampleRate; const gch = DSP.bufferChannels(g);
+      let back = null;
+      if (t.backingId) {
+        const f = await DB.get('files', t.backingId).catch(() => null);
+        if (f) back = await this.decode(f.blob).catch(() => null);
+      }
+      const target = +S.mixTarget, role = S.mixRole, notes = [];
+      // 1) Rentang: tanpa backing → potong diam di awal/akhir.
+      let start = 0, end = g.length, pre = 0, tail = 0;
+      if (!back) {
+        const [s, e] = DSP.activeRange(gch, sr);
+        pre = Math.round(0.15 * sr); tail = Math.round(0.6 * sr);
+        start = Math.max(0, s - pre); end = Math.min(g.length, e + tail);
+        if (start > sr * 0.3 || g.length - end > sr * 0.3) notes.push('diam dipotong');
+      }
+      const lat = back ? (t.latencyMs || 0) / 1000 : 0;
+      const len = Math.max(1, end - start - (back ? Math.round(lat * sr) : 0));
+      const render = async (guitarDb, backDb, masterDb, limit) => {
+        const oc = new OfflineAudioContext(2, len, sr);
+        const gs = oc.createBufferSource(); gs.buffer = g;
+        const hp = oc.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 85; hp.Q.value = 0.7;
+        const mud = oc.createBiquadFilter(); mud.type = 'peaking'; mud.frequency.value = 300; mud.Q.value = 1.0; mud.gain.value = -1.5;
+        const comp = oc.createDynamicsCompressor(); comp.threshold.value = -20; comp.knee.value = 8; comp.ratio.value = 2.5; comp.attack.value = 0.012; comp.release.value = 0.18;
+        const gg = oc.createGain(); gg.gain.value = Math.pow(10, guitarDb / 20);
+        const master = oc.createGain(); master.gain.value = Math.pow(10, masterDb / 20);
+        gs.connect(hp); hp.connect(mud); mud.connect(comp); comp.connect(gg); gg.connect(master);
+        if (S.mixRoom) {
+          const cv = oc.createConvolver(); cv.buffer = DSP.roomIR(oc); const wet = oc.createGain(); wet.gain.value = 0.14;
+          gg.connect(cv); cv.connect(wet); wet.connect(master);
+        }
+        if (back) {
+          const bs = oc.createBufferSource(); bs.buffer = back; const bg = oc.createGain(); bg.gain.value = Math.pow(10, backDb / 20);
+          bs.connect(bg); bg.connect(master); bs.start(0);
+        }
+        let outNode = master;
+        if (limit) {
+          const lim = oc.createDynamicsCompressor(); lim.threshold.value = -2; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.001; lim.release.value = 0.08;
+          master.connect(lim); outNode = lim;
+        }
+        // fade
+        const fade = oc.createGain(); outNode.connect(fade); fade.connect(oc.destination);
+        const dur = len / sr, fin = back ? 0 : 0.02, fout = back ? Math.min(2, dur / 4) : Math.min(0.4, dur / 4);
+        fade.gain.setValueAtTime(fin ? 0 : 1, 0); if (fin) fade.gain.linearRampToValueAtTime(1, fin);
+        fade.gain.setValueAtTime(1, Math.max(fin, dur - fout)); fade.gain.linearRampToValueAtTime(0.0001, dur);
+        gs.start(0, (start / sr) + lat);
+        return oc.startRendering();
+      };
+      // 2) Ukur loudness gitar (setelah EQ/kompres) & backing untuk menyeimbangkan.
+      let guitarDb = 0, backDb = 0;
+      if (back) {
+        const probe = await render(0, -120, 0, false);
+        const lg = DSP.lufs(DSP.bufferChannels(probe), sr);
+        const bprobe = await (async () => { const oc = new OfflineAudioContext(2, Math.min(back.length, len), sr); const s = oc.createBufferSource(); s.buffer = back; s.connect(oc.destination); s.start(0); return oc.startRendering(); })();
+        const lb = DSP.lufs(DSP.bufferChannels(bprobe), sr);
+        const rel = role === 'lead' ? 1.5 : role === 'rhythm' ? -2.5 : 0;
+        if (isFinite(lg) && isFinite(lb)) { guitarDb = clamp((lb + rel) - lg, -18, 18); notes.push(`gitar ${guitarDb >= 0 ? '+' : ''}${guitarDb.toFixed(1)} dB terhadap backing`); }
+        if (lat) notes.push(`latensi ${Math.round(lat * 1000)} ms dikoreksi`);
+      }
+      // 3) Render mix → naikkan ke target LUFS lewat limiter look-ahead (puncak ≤ −1 dBFS), beberapa iterasi.
+      const pass1 = await render(guitarDb, backDb, 0, false);
+      const base = DSP.bufferChannels(pass1);
+      const ceiling = Math.pow(10, -1 / 20), maxGR = -9;
+      const l1 = DSP.lufs(base, sr);
+      let G = isFinite(l1) ? clamp(target - l1, -24, 30) : 0, res = null, finalL = -Infinity, prevG = G;
+      for (let it = 0; it < 5; it++) {
+        res = DSP.limit(base, sr, ceiling, Math.pow(10, G / 20));
+        finalL = DSP.lufs(res.chs, sr);
+        if (!isFinite(finalL) || Math.abs(target - finalL) < 0.3) break;
+        if (res.grDb < maxGR && finalL < target) {
+          // terlalu banyak pembatasan: mundur ke langkah sebelumnya agar tidak pecah
+          if (G !== prevG) { G = prevG; res = DSP.limit(base, sr, ceiling, Math.pow(10, G / 20)); finalL = DSP.lufs(res.chs, sr); }
+          notes.push('dibatasi agar tidak pecah'); break;
+        }
+        prevG = G; G = clamp(G + clamp(target - finalL, -6, 6), -24, 36);
+      }
+      let chs = res.chs;
+      const pk = DSP.peak(chs);
+      if (t.ch === 1 && !back) chs = [chs[0]];
+      const blob = DSP.encodeWAV(chs, sr, t.bits || 16);
+      t.mix = { blob, lufs: isFinite(finalL) ? finalL : target, peakDb: DSP.db(pk), created: Date.now(), notes: notes.join(', '), size: blob.size };
+      await DB.put('takes', t);
+      if (!silent) toast(`Auto mix selesai: ${t.mix.lufs.toFixed(1)} LUFS`);
+    } catch (e) {
+      console.error(e); toast('Auto mix gagal: ' + (e.message || e), 5000);
+    } finally {
+      this.busy.delete(id); this.render();
+    }
+  },
+};
+
+// ─── Uji IR pada rekaman ─────────────────────────────────────────────────────
+const IRTest = {
+  src: null, dry: null, wet: null, mode: 'dry',
+  fillTakes(takes) {
+    const sel = $('#irTake'); const cur = sel.value; sel.innerHTML = '';
+    if (!takes.length) sel.append(h('option', { value: '', text: 'Belum ada rekaman' }));
+    takes.forEach((t) => sel.append(h('option', { value: t.id, text: `${t.name} (${fmtDur(t.dur)})`, selected: t.id === cur })));
+  },
+  fillIRs(tones) {
+    const sel = $('#irPick'); const cur = sel.value; sel.innerHTML = '';
+    const irs = tones.filter((x) => x.kind === 'ir');
+    if (!irs.length) sel.append(h('option', { value: '', text: 'Belum ada IR di pustaka' }));
+    irs.forEach((t) => sel.append(h('option', { value: t.id, text: t.name, selected: t.id === cur })));
+  },
+  stop() { if (this.src) { try { this.src.stop(); } catch {} this.src = null; } $('#btnIrPlay').textContent = '▶ Putar'; },
+  async play() {
+    if (this.src) return this.stop();
+    const tid = $('#irTake').value, iid = $('#irPick').value;
+    if (!tid) return toast('Belum ada rekaman');
+    try {
+      const ctx = await Rec.ensureCtx();
+      const t = await DB.get('takes', tid); const buf = await ctx.decodeAudioData(await t.blob.arrayBuffer());
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      this.dry = ctx.createGain(); this.wet = ctx.createGain();
+      src.connect(this.dry); this.dry.connect(ctx.destination);
+      if (iid) {
+        const ir = await DB.get('tones', iid);
+        const cv = ctx.createConvolver(); cv.normalize = true; cv.buffer = await ctx.decodeAudioData(await ir.blob.arrayBuffer());
+        src.connect(cv); cv.connect(this.wet); this.wet.connect(ctx.destination);
+      }
+      this.apply(); src.onended = () => { if (this.src === src) this.stop(); };
+      src.start(); this.src = src; $('#btnIrPlay').textContent = '■ Stop';
+    } catch (e) { toast('Tidak bisa memutar: ' + (e.message || e), 5000); this.stop(); }
+  },
+  apply() { if (!this.dry) return; const w = this.mode === 'wet'; this.dry.gain.value = w ? 0 : 1; this.wet.gain.value = w ? 1 : 0; },
+  init() {
+    $('#btnIrPlay').addEventListener('click', () => this.play());
+    bindSeg('irAB', (v) => { this.mode = v; this.apply(); });
+    $('#btnCabOff').addEventListener('click', () => { if (Control.setMod('CAB', false)) toast('CAB dimatikan untuk patch ini'); });
+    $('#btnGoRec').addEventListener('click', () => Tabs.show('rekam'));
+  },
+};
+
+// ─── Pustaka NAM & IR ────────────────────────────────────────────────────────
+const Tones = {
+  async render() {
+    let tones = [];
+    try { tones = await DB.all('tones'); } catch {}
+    const list = $('#toneList'); list.innerHTML = '';
+    const nNam = tones.filter((t) => t.kind === 'nam').length, nIr = tones.length - nNam;
+    $('#toneCount').textContent = tones.length ? `${nNam} NAM · ${nIr} IR` : '';
+    if (!tones.length) list.append(h('div', { class: 'empty', text: 'Belum ada NAM atau IR. Impor file dari HP, atau telusuri TONE3000 di atas.' }));
+    for (const t of tones) list.append(this.item(t));
+    IRTest.fillIRs(tones);
+  },
+
+  item(t) {
+    const m = t.meta || {};
+    const metaTxt = t.kind === 'ir'
+      ? [m.ms && `${m.ms.toFixed(0)} ms`, m.samples && `${m.samples} sampel`, m.sr && `${m.sr / 1000} kHz`, m.ch && (m.ch === 1 ? 'mono' : `${m.ch} kanal`)]
+      : [m.gear, m.arch, m.version && `v${m.version}`, m.sr && `${m.sr / 1000} kHz`, m.loudness != null && `loudness ${(+m.loudness).toFixed(1)} dB`];
+    const confirmRow = h('div', { class: 'row', hidden: true },
+      h('span', { class: 'note grow', text: 'Hapus dari pustaka?' }),
+      h('button', { class: 'btn danger sm', text: 'Hapus', onclick: async () => { await DB.del('tones', t.id); this.render(); } }),
+      h('button', { class: 'btn sm', text: 'Batal', onclick: () => { confirmRow.hidden = true; } }));
+    const fname = safeName(t.name) + (t.kind === 'ir' ? '.wav' : '.nam');
+    return h('div', { class: 'item' },
+      h('div', { class: 'item-h' },
+        h('span', { class: 'tag ' + t.kind, text: t.kind.toUpperCase() }),
+        h('div', { class: 't' }, h('b', { text: t.name }),
+          h('small', { text: [...metaTxt.filter(Boolean), fmtBytes(t.size)].join(' · ') }),
+          t.t3k ? h('small', { style: { display: 'block' } }, 'TONE3000 · ', t.t3k.creator || '', t.t3k.url ? [' · ', h('a', { href: t.t3k.url, target: '_blank', rel: 'noopener', text: 'lihat' })] : null) : null,
+          m.warn ? h('small', { style: { display: 'block', color: 'var(--warn)' }, text: m.warn }) : null)),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm', text: 'Unduh', onclick: () => downloadBlob(t.blob, fname) }),
+        h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareBlob(t.blob, fname, t.name) }),
+        t.kind === 'ir' ? h('button', { class: 'btn sm', text: 'Uji di rekaman', onclick: () => { $('#irPick').value = t.id; $('#irPick').scrollIntoView({ behavior: 'smooth', block: 'center' }); } }) : null,
+        h('button', { class: 'btn sm ghost danger', text: 'Hapus', onclick: () => { confirmRow.hidden = false; } })),
+      confirmRow);
+  },
+
+  /** Baca metadata NAM (JSON) atau IR (WAV). */
+  async inspect(blob, name, hintKind) {
+    const lower = (name || '').toLowerCase();
+    const isWav = hintKind === 'ir' || /\.wav$/.test(lower) || blob.type.includes('wav');
+    if (isWav) {
+      const meta = {};
+      try {
+        const oc = new OfflineAudioContext(1, 1, 48000);
+        const buf = await oc.decodeAudioData(await blob.arrayBuffer());
+        Object.assign(meta, { sr: buf.sampleRate, ch: buf.numberOfChannels, samples: buf.length, ms: buf.duration * 1000 });
+        if (buf.duration > 1.5) meta.warn = 'IR ini panjang; pedal biasanya hanya memakai bagian awalnya.';
+      } catch { meta.warn = 'WAV tidak bisa dibaca browser.'; }
+      return { kind: 'ir', meta };
+    }
+    const meta = {};
+    try {
+      const j = JSON.parse(await blob.text());
+      const md = j.metadata || {};
+      meta.version = j.version; meta.arch = j.architecture; meta.sr = j.sample_rate || md.sample_rate;
+      meta.gear = [md.gear_make, md.gear_model].filter(Boolean).join(' ') || md.name || '';
+      meta.type = md.gear_type || ''; meta.loudness = md.loudness;
+      if (!j.architecture || !j.weights) meta.warn = 'File ini tidak tampak seperti model NAM yang lengkap.';
+    } catch { meta.warn = 'File NAM tidak bisa dibaca (bukan JSON).'; }
+    return { kind: 'nam', meta };
+  },
+
+  async add(blob, name, extra = {}) {
+    const info = await this.inspect(blob, name, extra.kind);
+    const rec = { id: uid(), created: Date.now(), name: (name || 'tanpa nama').replace(/\.(nam|wav|json)$/i, ''), kind: info.kind, meta: info.meta, blob, size: blob.size, ...extra, kind: info.kind };
+    await DB.put('tones', rec);
+    return rec;
+  },
+
+  init() {
+    $('#fileTone').addEventListener('change', async (e) => {
+      const files = [...e.target.files]; e.target.value = '';
+      for (const f of files) { try { await this.add(f, f.name); } catch (err) { toast('Gagal impor ' + f.name + ': ' + err.message, 5000); } }
+      if (files.length) toast(`${files.length} file masuk pustaka`);
+      this.render();
+    });
+  },
+};
+
+// ─── TONE3000 (OAuth PKCE + Select flow) ─────────────────────────────────────
+const T3K = {
+  API: 'https://www.tone3000.com/api/v1',
+  get redirect() { return location.origin + location.pathname.replace(/index\.html$/, ''); },
+  get tokens() { try { return JSON.parse(localStorage.getItem('rigsaku:t3k') || 'null'); } catch { return null; } },
+  set tokens(v) { try { v ? localStorage.setItem('rigsaku:t3k', JSON.stringify(v)) : localStorage.removeItem('rigsaku:t3k'); } catch {} this.paint(); },
+  refreshing: null,
+
+  b64u(bytes) { return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); },
+  async start(format) {
+    if (!S.t3kKey) { Settings.open('setT3kKey'); toast('Isi publishable key TONE3000 dulu', 4000); return; }
+    if (!window.crypto?.subtle) { toast('Login TONE3000 butuh alamat https'); return; }
+    const verifier = this.b64u(crypto.getRandomValues(new Uint8Array(32)));
+    const state = this.b64u(crypto.getRandomValues(new Uint8Array(16)));
+    const challenge = this.b64u(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+    try { sessionStorage.setItem('rs_t3k_v', verifier); sessionStorage.setItem('rs_t3k_s', state); } catch {}
+    const u = new URL(this.API + '/oauth/authorize');
+    const p = { client_id: S.t3kKey, redirect_uri: this.redirect, response_type: 'code', code_challenge: challenge, code_challenge_method: 'S256', state, prompt: 'select_tone', format, preview: 'true', menubar: 'true' };
+    if (format === 'nam' && S.t3kArch) p.architecture = S.t3kArch;
+    for (const [k, v] of Object.entries(p)) u.searchParams.set(k, v);
+    location.href = u.toString();
+  },
+
+  /** Dipanggil saat halaman dimuat: tangani ?code=…&state=… dari TONE3000. */
+  async handleCallback() {
+    const q = new URLSearchParams(location.search);
+    if (!q.has('code') && !q.has('error') && !q.has('canceled')) return false;
+    let stored = null, verifier = null;
+    try { stored = sessionStorage.getItem('rs_t3k_s'); verifier = sessionStorage.getItem('rs_t3k_v'); sessionStorage.removeItem('rs_t3k_s'); sessionStorage.removeItem('rs_t3k_v'); } catch {}
+    history.replaceState(null, '', location.pathname + location.hash);
+    if (!stored) return false;
+    Tabs.show('nada');
+    if (q.get('state') !== stored) { toast('Login TONE3000 dibatalkan (state tidak cocok)'); return true; }
+    if (q.get('error')) { toast('TONE3000: ' + q.get('error'), 5000); return true; }
+    const code = q.get('code');
+    if (!code) { toast('Dibatalkan'); return true; }
+    try {
+      const r = await fetch(this.API + '/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ grant_type: 'authorization_code', code, code_verifier: verifier, redirect_uri: this.redirect, client_id: S.t3kKey }) });
+      if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error_description || j.error || r.status); }
+      const j = await r.json();
+      this.tokens = { access: j.access_token, refresh: j.refresh_token, exp: Date.now() + (j.expires_in || 3600) * 1000 };
+      toast('Tersambung ke TONE3000');
+      if (q.get('tone_id')) this.showTone(q.get('tone_id'));
+    } catch (e) { toast('Gagal masuk TONE3000: ' + e.message, 6000); }
+    return true;
+  },
+
+  async token() {
+    const t = this.tokens; if (!t) throw new Error('Belum masuk TONE3000');
+    if (Date.now() < t.exp - 60000) return t.access;
+    if (!this.refreshing) {
+      this.refreshing = (async () => {
+        const r = await fetch(this.API + '/oauth/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: t.refresh, client_id: S.t3kKey }) });
+        if (!r.ok) { if (r.status === 400 || r.status === 401) this.tokens = null; throw new Error('Sesi TONE3000 berakhir, masuk lagi'); }
+        const j = await r.json();
+        this.tokens = { access: j.access_token, refresh: j.refresh_token || t.refresh, exp: Date.now() + (j.expires_in || 3600) * 1000 };
+        return this.tokens.access;
+      })().finally(() => { this.refreshing = null; });
+    }
+    return this.refreshing;
+  },
+  async get(path) {
+    let tok = await this.token();
+    let r = await fetch(this.API + path, { headers: { Authorization: 'Bearer ' + tok } });
+    if (r.status === 401) { const t = this.tokens; if (t) { this.tokens = { ...t, exp: 0 }; tok = await this.token(); r = await fetch(this.API + path, { headers: { Authorization: 'Bearer ' + tok } }); } }
+    if (r.status === 429) throw new Error('Terlalu banyak permintaan, coba lagi sebentar');
+    if (!r.ok) throw new Error('TONE3000 menjawab ' + r.status);
+    return r.json();
+  },
+
+  paint() {
+    const on = !!this.tokens;
+    $('#t3kStatus').textContent = on ? 'tersambung' : 'belum tersambung';
+    $('#btnT3kLists').hidden = !on; $('#btnT3kLogout').hidden = !on;
+  },
+
+  async list(which) {
+    const box = $('#t3kList'); box.innerHTML = ''; box.append(h('div', { class: 'note' }, h('span', { class: 'spin' }), ' Memuat…'));
+    try {
+      const qs = which === 'favorited' || which === 'downloaded' ? '?page_size=25' : '';
+      const j = await this.get(`/tones/${which}${qs}`);
+      box.innerHTML = '';
+      const data = (j.data || []).filter((t) => ['nam', 'ir'].includes(String(t.format).toLowerCase()) || !t.format);
+      if (!data.length) box.append(h('div', { class: 'empty', text: 'Kosong. Tandai favorit di TONE3000 atau telusuri lewat tombol di atas.' }));
+      for (const t of data) box.append(this.card(t, () => this.showTone(t.id)));
+    } catch (e) { box.innerHTML = ''; box.append(h('div', { class: 'banner err' }, h('b', { text: 'Gagal memuat' }), e.message)); }
+  },
+
+  card(t, onClick) {
+    const user = t.user ? (t.user.display_name || t.user.username) : '';
+    const img = t.images && t.images[0];
+    return h('button', { class: 'item', style: { textAlign: 'left', cursor: 'pointer' }, onclick: onClick },
+      h('div', { class: 't3k-card' },
+        img ? h('img', { src: typeof img === 'string' ? img : (img.url || ''), alt: '', loading: 'lazy' }) : h('span', { class: 'tag t3k', text: 'T3K' }),
+        h('div', { class: 't', style: { minWidth: 0 } }, h('b', { text: t.title || `Tone ${t.id}` }),
+          h('small', { text: [String(t.format || '').toUpperCase(), Array.isArray(t.gear) ? t.gear.join(', ') : t.gear, user && 'oleh ' + user].filter(Boolean).join(' · ') }))));
+  },
+
+  async showTone(id) {
+    const box = $('#t3kDetail'); box.innerHTML = ''; box.append(h('div', { class: 'note' }, h('span', { class: 'spin' }), ' Membuka tone…'));
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    try {
+      const arch = S.t3kArch ? `?architecture=${S.t3kArch}` : '';
+      const t = await this.get(`/tones/${id}${arch}`);
+      const ms = await this.get(`/models?tone_id=${id}&page_size=100${S.t3kArch ? '&architecture=' + S.t3kArch : ''}`);
+      const fmt = String(t.format || '').toLowerCase();
+      const kind = fmt === 'ir' ? 'ir' : fmt === 'nam' ? 'nam' : null;
+      const user = t.user ? (t.user.display_name || t.user.username) : '';
+      const img = t.images && t.images[0];
+      box.innerHTML = '';
+      const models = ms.data || [];
+      box.append(h('div', { class: 'item' },
+        h('div', { class: 't3k-card' },
+          img ? h('img', { src: typeof img === 'string' ? img : (img.url || ''), alt: '' }) : null,
+          h('div', { class: 't' }, h('b', { text: t.title }), h('small', { text: [fmt.toUpperCase(), Array.isArray(t.gear) ? t.gear.join(', ') : t.gear, user && 'oleh ' + user, t.license].filter(Boolean).join(' · ') }))),
+        t.description ? h('p', { class: 'note', text: String(t.description).slice(0, 400) + (String(t.description).length > 400 ? '…' : '') }) : null,
+        kind ? null : h('div', { class: 'banner', text: `Format "${t.format}" tidak bisa dipakai di GP-100. Pilih tone NAM atau IR.` }),
+        h('div', { class: 'list' }, models.length ? models.map((m) => h('div', { class: 'row nowrap' },
+          h('span', { class: 'grow', style: { minWidth: 0, overflowWrap: 'anywhere', fontSize: '13.5px' }, text: `${m.name}${m.size ? ' · ' + m.size : ''}${m.architecture_version ? ' · A' + m.architecture_version : ''}` }),
+          h('button', { class: 'btn sm primary', disabled: !kind, text: 'Simpan', onclick: (e) => this.download(m, t, kind, e.currentTarget) }))) : h('div', { class: 'empty', text: 'Tidak ada model yang cocok dengan filter arsitektur.' })),
+        h('div', { class: 'row' }, t.url ? h('a', { class: 'btn sm ghost', href: t.url, target: '_blank', rel: 'noopener', text: 'Buka di TONE3000' }) : null,
+          h('button', { class: 'btn sm ghost', text: 'Tutup', onclick: () => { box.innerHTML = ''; } }))));
+    } catch (e) { box.innerHTML = ''; box.append(h('div', { class: 'banner err' }, h('b', { text: 'Gagal membuka tone' }), e.message)); }
+  },
+
+  async download(m, t, kind, btn) {
+    btn.disabled = true; btn.textContent = '…';
+    try {
+      const tok = await this.token();
+      const r = await fetch(m.model_url, { headers: { Authorization: 'Bearer ' + tok } });
+      if (!r.ok) throw new Error('unduhan ditolak (' + r.status + ')');
+      const blob = await r.blob();
+      const user = t.user ? (t.user.display_name || t.user.username) : '';
+      const name = models_name(t.title, m.name);
+      await Tones.add(blob, name, { kind, source: 'tone3000', t3k: { toneId: t.id, modelId: m.id, title: t.title, creator: user, url: t.url } });
+      btn.textContent = 'Tersimpan ✓'; toast(`${name} masuk pustaka`);
+      Tones.render();
+    } catch (e) {
+      btn.disabled = false; btn.textContent = 'Simpan';
+      toast('Gagal mengunduh: ' + (e.message === 'Failed to fetch' ? 'diblokir jaringan/browser' : e.message), 6000);
+    }
+    function models_name(a, b) { return a && b && !String(b).toLowerCase().includes(String(a).toLowerCase()) ? `${a} – ${b}` : (b || a || 'tone'); }
+  },
+
+  init() {
+    $('#btnT3kNam').addEventListener('click', () => this.start('nam'));
+    $('#btnT3kIr').addEventListener('click', () => this.start('ir'));
+    $('#btnT3kLists').addEventListener('click', () => { const tabs = $('#t3kTabs'); tabs.hidden = !tabs.hidden; if (!tabs.hidden) this.list($('#t3kSeg .sel').dataset.l); });
+    $$('#t3kSeg button').forEach((b) => b.addEventListener('click', () => { $$('#t3kSeg button').forEach((x) => x.classList.toggle('sel', x === b)); this.list(b.dataset.l); }));
+    $('#btnT3kLogout').addEventListener('click', () => { this.tokens = null; $('#t3kList').innerHTML = ''; $('#t3kDetail').innerHTML = ''; $('#t3kTabs').hidden = true; toast('Akun TONE3000 diputus'); });
+    this.paint();
+  },
+};
+
+// ─── Kosakata model efek keluarga Valeton (kode → nama, modul) ───────────────
+// Diambil dari algorithm.xml Valeton GP-200 (via proyek open-source GP200 Studio).
+// GP-100 memakai pola kode yang sama ((kategori<<24)|indeks) dan sebagian besar model ini.
+const FX = (() => {
+  const byCode = new Map(), byMod = {};
+  for (const [code, name, mod] of VALETON_FX) {
+    byCode.set(code, { name, mod });
+    const m = mod === 'WAH' ? 'MOD' : mod;
+    if (m === 'VOL') continue;
+    (byMod[m] = byMod[m] || new Set()).add(name === 'SnapTone' ? 'SnapTone (NAM)' : name);
+  }
+  return { byCode, byMod: Object.fromEntries(Object.entries(byMod).map(([k, v]) => [k, [...v]])) };
+})();
+
+// ─── Asisten preset AI ───────────────────────────────────────────────────────
+const AI = {
+  results: [],
+
+  system() {
+    const vocab = MODULES.map((m) => `${m.id}: ${(FX.byMod[m.id] || []).join(', ')}`).join('\n');
+    return `Kamu adalah teknisi tone gitar yang sangat paham multi-efek Valeton GP-100.
+Tugas: rancang preset GP-100 yang meniru sound dari lagu/permintaan pengguna.
+
+Fakta GP-100:
+- Rantai 9 modul: PRE (compressor, boost, filter), DST (overdrive, distortion, fuzz), AMP (model ampli; juga SnapTone/NAM), NR (noise gate), CAB (kabinet atau IR pengguna), EQ, MOD (chorus, flanger, phaser, tremolo, vibrato, rotary, pitch, wah), DLY (delay), RVB (reverb).
+- Setiap modul bisa on/off. Nilai knob umumnya 0–100; waktu delay dalam ms; tanda tempo boleh ditulis sebagai teks.
+- Kalau tidak ada model yang pas, boleh menyarankan NAM capture atau IR (CAB) dari TONE3000.
+
+Nama model keluarga Valeton (GP-100 memakai sebagian besar nama ini; utamakan nama dari daftar, jangan mengarang):
+${vocab}
+
+Aturan:
+- Beri tepat 3 preset dengan pendekatan berbeda (mis. setia ke rekaman studio, versi live, versi ringan/clean-friendly).
+- Isi semua 9 modul. Modul yang mati: "on": false dan "model": "".
+- "ref" = gear asli yang ditiru (mis. "Marshall JCM800", "Ibanez TS808").
+- "params" berisi 2–6 knob terpenting dengan nama knob seperti di pedal (Gain, Bass, Middle, Treble, Presence, Volume, Level, Tone, Mix, Time, Feedback, Rate, Depth, Decay, Threshold, dll.) dan nilai angka.
+- Sesuaikan dengan gitar, keluaran, dan catatan pengguna bila ada.
+- Semua teks dalam Bahasa Indonesia yang ringkas.
+- Jawab HANYA dengan satu objek JSON valid, tanpa teks lain, tanpa blok kode, dengan bentuk:
+{"song":"","artist":"","summary":"1-2 kalimat tentang karakter tone & gear aslinya",
+ "presets":[{"name":"maks 12 karakter","style":"","description":"","bpm":120,"patch_volume":60,
+  "modules":{"PRE":{"on":false,"model":"","ref":"","params":{}},"DST":{...},"AMP":{...},"NR":{...},"CAB":{...},"EQ":{...},"MOD":{...},"DLY":{...},"RVB":{...}},
+  "nam_ir":{"advice":"kapan sebaiknya memakai NAM/IR","tone3000_query":"kata kunci pencarian"},
+  "tips":"pickup, posisi volume/tone gitar, teknik main"}]}`;
+  },
+  userMsg() {
+    const song = $('#aiSong').value.trim();
+    const g = $('#aiGuitar').value.trim(), o = $('#aiOutput').value, x = $('#aiExtra').value.trim();
+    return `Permintaan: ${song}\nGitar: ${g || 'tidak disebutkan'}\nKeluaran: ${o}${x ? '\nCatatan: ' + x : ''}`;
+  },
+  check() {
+    if (!$('#aiSong').value.trim()) { toast('Tulis dulu lagu atau sound yang diinginkan'); $('#aiSong').focus(); return false; }
+    S.aiGuitar = $('#aiGuitar').value.trim(); S.aiOutput = $('#aiOutput').value; saveS();
+    return true;
+  },
+  status(msg, busy) {
+    const el = $('#aiStatus'); el.innerHTML = '';
+    if (busy) el.append(h('span', { class: 'spin', style: { width: '13px', height: '13px', verticalAlign: '-2px' } }), ' ');
+    el.append(msg || '');
+  },
+  modeLabel() { $('#aiModeLabel').textContent = S.aiKey ? 'via API key' : 'mode salin-tempel'; },
+
+  async ask() {
+    if (!this.check()) return;
+    if (!S.aiKey) { this.copyPrompt(); return; }
+    const btn = $('#btnAiAsk'); btn.disabled = true;
+    this.status('AI sedang meracik preset… (10–40 detik)', true);
+    const body = { model: S.aiModel, max_tokens: 8000, system: this.system(), messages: [{ role: 'user', content: this.userMsg() }] };
+    if (S.aiWeb === '1') body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }];
+    const call = async (b) => fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': S.aiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify(b),
+    });
+    try {
+      let r = await call(body);
+      if (!r.ok && body.tools && r.status === 400) { delete body.tools; r = await call(body); }
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        const m = j.error?.message || r.statusText;
+        throw new Error(r.status === 401 ? 'API key tidak valid' : r.status === 429 ? 'Batas pemakaian tercapai, coba lagi nanti' : r.status === 529 ? 'Server AI sedang sibuk, coba lagi' : `${r.status}: ${m}`);
+      }
+      const j = await r.json();
+      const text = (j.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('\n');
+      this.take(text);
+    } catch (e) {
+      this.status(''); toast('AI gagal: ' + (e.message === 'Failed to fetch' ? 'tidak ada koneksi' : e.message), 6000);
+    } finally { btn.disabled = false; }
+  },
+
+  copyPrompt() {
+    if (!this.check()) return;
+    const full = `${this.system()}\n\n---\n${this.userMsg()}`;
+    copyText(full);
+    $('#aiPasteBox').hidden = false;
+    this.status('Prompt disalin. Buka aplikasi Claude, tempel, kirim, lalu salin seluruh jawabannya dan tempel di kotak bawah.');
+  },
+
+  take(text) {
+    let data;
+    try {
+      const s = text.indexOf('{'), e = text.lastIndexOf('}');
+      data = JSON.parse(text.slice(s, e + 1));
+    } catch { this.status(''); toast('Jawaban AI tidak bisa dibaca sebagai JSON. Coba lagi.', 5000); return; }
+    const presets = (data.presets || []).map((p) => this.normalize(p, data));
+    if (!presets.length) { toast('Tidak ada preset di jawaban'); return; }
+    this.results = presets;
+    this.status(data.summary || '');
+    this.renderResults();
+  },
+
+  normalize(p, data) {
+    const mods = {};
+    for (const m of MODULES) {
+      const src = (p.modules || {})[m.id] || {};
+      const params = {};
+      for (const [k, v] of Object.entries(src.params || {})) params[k] = typeof v === 'number' ? v : (isNaN(+v) ? String(v) : +v);
+      mods[m.id] = { on: !!src.on, model: src.model || '', ref: src.ref || '', params };
+    }
+    return {
+      type: 'recipe', id: uid(), created: Date.now(),
+      name: String(p.name || 'Preset').slice(0, 24), style: p.style || '', description: p.description || '',
+      song: [data.song, data.artist].filter(Boolean).join(' – ') || $('#aiSong').value.trim(),
+      bpm: +p.bpm || '', patchVolume: p.patch_volume != null ? +p.patch_volume : '',
+      notes: [p.description, p.tips].filter(Boolean).join('\n\n'),
+      modules: mods, namIr: p.nam_ir || {},
+    };
+  },
+
+  chain(mods) {
+    return h('div', { class: 'chain' }, MODULES.map((m) => h('span', { class: 'c' + (mods[m.id].on ? ' on' : ''), style: { '--hue': m.hue }, title: mods[m.id].model || 'mati', text: mods[m.id].on && mods[m.id].model ? `${m.id} · ${mods[m.id].model}` : m.id })));
+  },
+
+  renderResults() {
+    const box = $('#aiResults'); box.innerHTML = '';
+    this.results.forEach((p) => box.append(h('div', { class: 'recipe' },
+      h('div', {}, h('h3', { text: p.name }), p.style ? h('small', { class: 'note', text: p.style }) : null),
+      p.description ? h('p', { text: p.description }) : null,
+      this.chain(p.modules),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm primary', text: 'Pilih & edit', onclick: () => Editor.open(p) }),
+        h('button', { class: 'btn sm', text: 'Kirim on/off', onclick: () => Editor.send(p) }),
+        h('button', { class: 'btn sm ghost', text: 'Simpan', onclick: async () => { await DB.put('presets', { ...p, created: Date.now() }); Library.render(); toast('Disimpan ke pustaka'); } })))));
+  },
+
+  init() {
+    $('#aiGuitar').value = S.aiGuitar || ''; $('#aiOutput').value = S.aiOutput || 'headphone';
+    $('#btnAiAsk').addEventListener('click', () => this.ask());
+    $('#btnAiCopy').addEventListener('click', () => this.copyPrompt());
+    $('#btnAiPaste').addEventListener('click', () => { $('#aiPasteBox').hidden = !$('#aiPasteBox').hidden; });
+    $('#btnAiParse').addEventListener('click', () => { const t = $('#aiPasteText').value; if (t.trim()) this.take(t); });
+    this.modeLabel();
+  },
+};
+
+// ─── Editor resep preset ─────────────────────────────────────────────────────
+const Editor = {
+  cur: null,
+  open(p) {
+    this.cur = JSON.parse(JSON.stringify(p));
+    $('#editorCard').hidden = false;
+    $('#edName').value = this.cur.name; $('#edSong').value = this.cur.song || '';
+    $('#edBpm').value = this.cur.bpm || ''; $('#edVol').value = this.cur.patchVolume ?? '';
+    $('#edNotes').value = this.cur.notes || '';
+    const ni = this.cur.namIr || {};
+    $('#edToneHint').textContent = [ni.advice, ni.tone3000_query && `Kata kunci: ${ni.tone3000_query}`].filter(Boolean).join('\n') || '—';
+    this.renderMods();
+    $('#editorCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  },
+  renderMods() {
+    const box = $('#edMods'); box.innerHTML = '';
+    for (const m of MODULES) {
+      const md = this.cur.modules[m.id];
+      const listId = 'dl-' + m.id;
+      const sw = h('label', { class: 'switch', title: 'on/off' }, h('input', { type: 'checkbox', checked: md.on, onchange: (e) => { md.on = e.target.checked; } }), h('i'));
+      const params = h('div', { class: 'params' });
+      const paintParams = () => {
+        params.innerHTML = '';
+        for (const [k, v] of Object.entries(md.params)) {
+          const kIn = h('input', { class: 'k', value: k, 'aria-label': 'Nama knob' });
+          const vIn = h('input', { class: 'v', value: v, inputmode: 'decimal', 'aria-label': 'Nilai' });
+          kIn.addEventListener('change', () => { const nk = kIn.value.trim(); if (!nk || nk === k) return; const val = md.params[k]; delete md.params[k]; md.params[nk] = val; paintParams(); });
+          vIn.addEventListener('change', () => { md.params[kIn.value.trim() || k] = isNaN(+vIn.value) ? vIn.value : +vIn.value; });
+          params.append(h('div', { class: 'param' }, kIn, vIn, h('button', { 'aria-label': 'Hapus knob', text: '×', onclick: () => { delete md.params[k]; paintParams(); } })));
+        }
+        params.append(h('button', { class: 'btn sm ghost', text: '+ knob', onclick: () => { let n = 'Knob', i = 1; while (md.params[n]) n = 'Knob ' + (++i); md.params[n] = 50; paintParams(); } }));
+      };
+      paintParams();
+      box.append(h('div', { class: 'modrow' },
+        h('div', { class: 'modrow-h' }, h('b', { text: m.id, style: { color: m.hue } }), sw,
+          h('input', { class: 'input grow', list: listId, value: md.model, placeholder: 'model', 'aria-label': `Model ${m.id}`, oninput: (e) => { md.model = e.target.value; } })),
+        h('datalist', { id: listId }, (FX.byMod[m.id] || []).map((n) => h('option', { value: n }))),
+        h('input', { class: 'input', value: md.ref, placeholder: 'meniru gear asli…', 'aria-label': `Referensi ${m.id}`, style: { minHeight: '36px', fontSize: '13px' }, oninput: (e) => { md.ref = e.target.value; } }),
+        params));
+    }
+  },
+  collect() {
+    const c = this.cur; if (!c) return null;
+    c.name = $('#edName').value.trim() || c.name; c.song = $('#edSong').value.trim();
+    c.bpm = +$('#edBpm').value || ''; c.patchVolume = $('#edVol').value === '' ? '' : +$('#edVol').value;
+    c.notes = $('#edNotes').value;
+    return c;
+  },
+  send(p) {
+    if (!Midi.connected) { toast('Sambungkan GP-100 dulu (tab Kontrol)'); return; }
+    let ok = true;
+    for (const m of MODULES) ok = Control.setMod(m.id, !!p.modules[m.id].on) && ok;
+    if (p.patchVolume !== '' && p.patchVolume != null) Midi.cc(CC.patchVolume, clamp(+p.patchVolume, 0, 100));
+    if (p.bpm) { Control.setBpm(+p.bpm); Control.sendBpm(); }
+    toast(ok ? 'On/off modul terkirim ke patch aktif' : 'Sebagian perintah gagal terkirim');
+  },
+  text(p) {
+    const lines = [`${p.name}${p.song ? ' — ' + p.song : ''}`, p.bpm ? `BPM ${p.bpm}` : '', p.patchVolume !== '' ? `Patch volume ${p.patchVolume}` : '', ''];
+    for (const m of MODULES) {
+      const d = p.modules[m.id];
+      if (!d.on) { lines.push(`${m.id}: mati`); continue; }
+      const ps = Object.entries(d.params).map(([k, v]) => `${k} ${v}`).join(', ');
+      lines.push(`${m.id}: ${d.model || '?'}${d.ref ? ' (' + d.ref + ')' : ''}${ps ? ' — ' + ps : ''}`);
+    }
+    if (p.notes) lines.push('', p.notes);
+    lines.push('', 'Dibuat dengan Rig Saku untuk Valeton GP-100');
+    return lines.filter((l, i, a) => !(l === '' && a[i - 1] === '')).join('\n');
+  },
+  init() {
+    $('#btnEditorClose').addEventListener('click', () => { $('#editorCard').hidden = true; this.cur = null; });
+    $('#btnEdSend').addEventListener('click', () => { const c = this.collect(); if (c) this.send(c); });
+    $('#btnEdSave').addEventListener('click', async () => { const c = this.collect(); if (!c) return; c.type = 'recipe'; c.created = c.created || Date.now(); await DB.put('presets', c); Library.render(); toast('Preset disimpan'); });
+    $('#btnEdShare').addEventListener('click', () => { const c = this.collect(); if (c) shareText(this.text(c), c.name); });
+    $('#btnEdT3k').addEventListener('click', () => { const c = this.collect(); const q = c?.namIr?.tone3000_query; if (q) copyText(q); T3K.start('nam'); });
+  },
+};
+
+// ─── Pustaka preset (resep + .prst) ──────────────────────────────────────────
+const Library = {
+  async render() {
+    let items = [];
+    try { items = await DB.all('presets'); } catch {}
+    const list = $('#presetList'); list.innerHTML = '';
+    if (!items.length) list.append(h('div', { class: 'empty', text: 'Belum ada preset. Minta AI membuatkan, atau impor file .prst dari Valeton Suite.' }));
+    for (const p of items) list.append(p.type === 'prst' ? this.prstItem(p) : this.recipeItem(p));
+  },
+  confirmRow(id) {
+    const row = h('div', { class: 'row', hidden: true },
+      h('span', { class: 'note grow', text: 'Hapus preset ini?' }),
+      h('button', { class: 'btn danger sm', text: 'Hapus', onclick: async () => { await DB.del('presets', id); this.render(); } }),
+      h('button', { class: 'btn sm', text: 'Batal', onclick: () => { row.hidden = true; } }));
+    return row;
+  },
+  recipeItem(p) {
+    const cr = this.confirmRow(p.id);
+    return h('div', { class: 'item' },
+      h('div', { class: 'item-h' }, h('span', { class: 'tag', text: 'AI' }),
+        h('div', { class: 't' }, h('b', { text: p.name }), h('small', { text: [p.song, p.bpm && `${p.bpm} BPM`, fmtDate(p.created)].filter(Boolean).join(' · ') }))),
+      AI.chain(p.modules),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm primary', text: 'Edit', onclick: () => Editor.open(p) }),
+        h('button', { class: 'btn sm', text: 'Kirim on/off', onclick: () => Editor.send(p) }),
+        h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareText(Editor.text(p), p.name) }),
+        h('button', { class: 'btn sm', text: 'Unduh .json', onclick: () => downloadBlob(new Blob([JSON.stringify(p, null, 2)], { type: 'application/json' }), safeName(p.name) + '.rigsaku.json') }),
+        h('button', { class: 'btn sm ghost danger', text: 'Hapus', onclick: () => { cr.hidden = false; } })),
+      cr);
+  },
+  prstItem(p) {
+    const cr = this.confirmRow(p.id);
+    const detail = h('div', { hidden: true });
+    const info = p.info || {};
+    const slots = (info.slots || []).map((s) => h('div', { class: 'row nowrap', style: { fontSize: '13px' } },
+      h('span', { class: 'tag', text: s.slot != null ? `#${s.slot}` : '•' }),
+      h('span', { class: 'grow', style: { minWidth: 0, overflowWrap: 'anywhere' }, text: `${s.name ? s.name + ' (' + s.mod + ')' : 'kode ' + s.code}${s.on === false ? ' · mati' : ''}` })));
+    return h('div', { class: 'item' },
+      h('div', { class: 'item-h' }, h('span', { class: 'tag', text: 'PRST' }),
+        h('div', { class: 't' }, h('b', { text: info.title || p.name }),
+          h('small', { text: [p.fileName, fmtBytes(p.size), info.format, fmtDate(p.created)].filter(Boolean).join(' · ') }),
+          info.warn ? h('small', { style: { display: 'block', color: 'var(--warn)' }, text: info.warn }) : null)),
+      slots.length ? h('div', { class: 'list', style: { gap: '4px' } }, slots, h('p', { class: 'note', text: 'Nama efek diperkirakan dari kode model keluarga Valeton.' })) : null,
+      h('div', { class: 'row' },
+        h('button', { class: 'btn sm', text: 'Lihat isi', onclick: () => { detail.hidden = !detail.hidden; if (!detail.hidden && !detail.firstChild) detail.append(h('pre', { class: 'log', style: { height: '260px' }, text: info.preview || '' })); } }),
+        h('button', { class: 'btn sm', text: 'Unduh', onclick: () => downloadBlob(p.blob, p.fileName || safeName(p.name) + '.prst') }),
+        h('button', { class: 'btn sm', text: 'Bagikan', onclick: () => shareBlob(p.blob, p.fileName || safeName(p.name) + '.prst', p.name) }),
+        h('button', { class: 'btn sm ghost danger', text: 'Hapus', onclick: () => { cr.hidden = false; } })),
+      detail, cr);
+  },
+
+  /** Baca .prst: GP-100 = XML; selain itu tampilkan sebagai biner. */
+  async parsePrst(blob) {
+    const buf = new Uint8Array(await blob.arrayBuffer());
+    const head = new TextDecoder('utf-8', { fatal: false }).decode(buf.slice(0, 64)).replace(/^﻿/, '').trimStart();
+    if (!head.startsWith('<')) {
+      const hex = [...buf.slice(0, 256)].map((b) => b.toString(16).padStart(2, '0')).join(' ');
+      return { format: 'biner', warn: 'Format biner: kemungkinan preset GP-200/seri lain, bukan GP-100.', preview: hex, slots: [] };
+    }
+    const text = new TextDecoder().decode(buf);
+    const doc = new DOMParser().parseFromString(text, 'application/xml');
+    if (doc.querySelector('parsererror')) return { format: 'XML rusak', warn: 'File XML tidak valid.', preview: text.slice(0, 4000), slots: [] };
+    const slots = []; let title = '';
+    const all = [doc.documentElement, ...doc.documentElement.querySelectorAll('*')];
+    for (const el of all) {
+      for (const a of el.attributes) {
+        if (!title && /^(name|patchname|presetname|title)$/i.test(a.name) && a.value.trim()) title = a.value.trim();
+      }
+      const codeAttr = [...el.attributes].find((a) => /code/i.test(a.name) && /^-?\d+$|^0x[0-9a-f]+$/i.test(a.value.trim()));
+      if (codeAttr) {
+        const code = Number(codeAttr.value.trim());
+        const fx = FX.byCode.get(code);
+        const slotA = [...el.attributes].find((a) => /^(x|slot|index|pos)$/i.test(a.name));
+        const onA = [...el.attributes].find((a) => /^(active|enable|enabled|on|switch|state)$/i.test(a.name));
+        slots.push({ code, name: fx?.name, mod: fx?.mod, slot: slotA ? +slotA.value : null, on: onA ? !/^(0|false|off)$/i.test(onA.value) : null });
+      }
+    }
+    if (!title) { const n = doc.querySelector('name, Name, patchName, PatchName'); if (n && n.textContent.trim()) title = n.textContent.trim(); }
+    return { format: 'XML', title, slots: slots.slice(0, 16), preview: text.slice(0, 6000) };
+  },
+
+  init() {
+    $('#filePrst').addEventListener('change', async (e) => {
+      const files = [...e.target.files]; e.target.value = '';
+      for (const f of files) {
+        try {
+          const info = await this.parsePrst(f);
+          await DB.put('presets', { type: 'prst', id: uid(), created: Date.now(), name: f.name.replace(/\.(prst|xml)$/i, ''), fileName: f.name, size: f.size, blob: f, info });
+        } catch (err) { toast('Gagal impor ' + f.name + ': ' + err.message, 5000); }
+      }
+      if (files.length) toast(`${files.length} preset diimpor`);
+      this.render();
+    });
+  },
+};
+
+// ─── Lab: monitor MIDI ───────────────────────────────────────────────────────
+const Lab = {
+  lines: [], max: 600,
+  hex: (d) => [...d].map((b) => b.toString(16).toUpperCase().padStart(2, '0')).join(' '),
+  stamp() { const d = new Date(); return d.toTimeString().slice(0, 8) + '.' + String(d.getMilliseconds()).padStart(3, '0'); },
+  isGp(d) { return d.length > 8 && GP100_SYSEX_HEADER.every((b, i) => d[i] === b); },
+  describe(d) {
+    const st = d[0] & 0xF0, ch = (d[0] & 15) + 1;
+    if (d[0] === 0xF0) {
+      if (this.isGp(d)) return `SysEx GP-100 · FUNC ${this.hex([d[8]])} · ${d.length} byte`;
+      if (d[1] === 0x7E && d[3] === 0x06 && d[4] === 0x02) return `Identity Reply · pabrikan ${this.hex(d.slice(5, d[5] === 0 ? 8 : 6))}`;
+      return `SysEx · ${d.length} byte`;
+    }
+    if (st === 0xB0) return `CC ${d[1]} = ${d[2]} · kanal ${ch}${CC_NAME[d[1]] ? ' · ' + CC_NAME[d[1]] : ''}`;
+    if (st === 0xC0) return `Program Change ${d[1]} · kanal ${ch}`;
+    if (st === 0x90) return `Note On ${d[1]} vel ${d[2]}`;
+    if (st === 0x80) return `Note Off ${d[1]}`;
+    if (d[0] === 0xF8) return 'Clock';
+    return '';
+  },
+  push(kind, text, gp, isSysex) {
+    this.lines.push({ kind, text: `${this.stamp()} ${text}`, gp, isSysex });
+    if (this.lines.length > this.max) this.lines.splice(0, this.lines.length - this.max);
+    this.paintSoon();
+  },
+  paintSoon() { if (this._p) return; this._p = requestAnimationFrame(() => { this._p = 0; this.paint(); }); },
+  paint() {
+    const box = $('#midiLog'); if (!box) return;
+    const only = $('#logSysexOnly').checked;
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for (const l of this.lines) {
+      if (only && !l.isSysex && l.kind !== 'sys') continue;
+      frag.append(h('div', { class: l.kind + (l.gp ? ' gp' : ''), text: l.text }));
+    }
+    box.append(frag);
+    if (atBottom) box.scrollTop = box.scrollHeight;
+  },
+  inMsg(data, port) {
+    if (data[0] === 0xF8 || data[0] === 0xFE) return; // clock/active sensing
+    const d = [...data];
+    this.push('in', `◀ ${port.name ? '[' + port.name + '] ' : ''}${this.hex(d)}  ${this.describe(d)}`, this.isGp(d), d[0] === 0xF0);
+  },
+  outMsg(data) { const d = [...data]; this.push('out', `▶ ${this.hex(d)}  ${this.describe(d)}`, this.isGp(d), d[0] === 0xF0); },
+  sys(text) { this.push('sys', '· ' + text, false, false); },
+  ports(outs, ins) {
+    const dl = $('#portList'); dl.innerHTML = '';
+    const row = (k, p) => dl.append(h('dt', { text: k }), h('dd', { text: `${p.name || '?'}${p.manufacturer ? ' · ' + p.manufacturer : ''} · ${p.state}` }));
+    outs.forEach((p) => row('Keluar', p)); ins.forEach((p) => row('Masuk', p));
+    if (!outs.length && !ins.length) dl.append(h('dt', { text: '—' }), h('dd', { text: 'Tidak ada perangkat MIDI terlihat' }));
+  },
+  text() { return this.lines.map((l) => l.text).join('\n'); },
+  init() {
+    $('#btnIdent').addEventListener('click', () => Midi.identity());
+    $('#btnLogCopy').addEventListener('click', () => copyText(this.text() || '(log kosong)'));
+    $('#btnLogSave').addEventListener('click', () => downloadBlob(new Blob([this.text()], { type: 'text/plain' }), `rigsaku-midi-${Date.now()}.txt`));
+    $('#btnLogClear').addEventListener('click', () => { this.lines = []; this.paint(); });
+    $('#logSysexOnly').addEventListener('change', () => this.paint());
+    $('#btnManCc').addEventListener('click', () => Midi.cc(clamp(+$('#manCc').value, 0, 127), clamp(+$('#manVal').value, 0, 127)));
+    $('#btnManPc').addEventListener('click', () => Midi.pc(clamp(+$('#manPc').value, 0, 127)));
+    this.sys('Rig Saku siap. Tekan "Sambungkan GP-100" di tab Kontrol.');
+  },
+};
+
+// ─── Lembar pengaturan ───────────────────────────────────────────────────────
+const Settings = {
+  open(focusId) {
+    $('#settings').hidden = false;
+    this.paintStorage();
+    if (focusId) setTimeout(() => { const el = $('#' + focusId); el && el.focus(); el && el.scrollIntoView({ block: 'center' }); }, 60);
+  },
+  close() { $('#settings').hidden = true; },
+  fillPorts(outs) {
+    const sel = $('#setPort'); const cur = S.port; sel.innerHTML = '';
+    sel.append(h('option', { value: '', text: 'Otomatis' }));
+    outs.forEach((p) => sel.append(h('option', { value: p.id, text: p.name, selected: p.id === cur })));
+  },
+  async paintStorage() {
+    const el = $('#storageInfo');
+    try {
+      const [tk, tn, pr] = await Promise.all([DB.all('takes'), DB.all('tones'), DB.all('presets')]);
+      let txt = `${tk.length} rekaman · ${tn.length} NAM/IR · ${pr.length} preset`;
+      if (navigator.storage?.estimate) { const e = await navigator.storage.estimate(); txt += ` · terpakai ${fmtBytes(e.usage)} dari kuota ${fmtBytes(e.quota)}`; }
+      if (navigator.storage?.persisted) txt += (await navigator.storage.persisted()) ? ' · permanen' : ' · bisa dihapus browser saat memori penuh';
+      el.textContent = txt;
+    } catch { el.textContent = 'Penyimpanan browser tidak tersedia di mode ini.'; }
+  },
+  init() {
+    $('#btnSettings').addEventListener('click', () => this.open());
+    $('#settings').addEventListener('click', (e) => { if (e.target.id === 'settings' || e.target.hasAttribute('data-close')) this.close(); });
+    const ch = $('#setChannel');
+    for (let i = 0; i < 16; i++) ch.append(h('option', { value: i, text: `Kanal ${i + 1}${i === 0 ? ' (bawaan)' : ''}`, selected: i === S.channel }));
+    ch.addEventListener('change', () => { S.channel = +ch.value; saveS(); });
+    $('#setPort').addEventListener('change', (e) => { S.port = e.target.value; saveS(); Midi.pick(); });
+    const sw = $('#setSwapPatch'); sw.checked = !!S.swapPatch; sw.addEventListener('change', () => { S.swapPatch = sw.checked; saveS(); });
+    bindSeg('bitDepth'); bindSeg('chanMode');
+    const lat = $('#setLatency'); lat.value = S.latencyMs; lat.addEventListener('change', () => { S.latencyMs = lat.value === '' ? '' : clamp(+lat.value, 0, 500); saveS(); });
+    const key = $('#setAiKey'); key.value = S.aiKey; key.addEventListener('change', () => { S.aiKey = key.value.trim(); saveS(); AI.modeLabel(); });
+    const mdl = $('#setAiModel'); mdl.value = S.aiModel; mdl.addEventListener('change', () => { S.aiModel = mdl.value; saveS(); });
+    const web = $('#setAiWeb'); web.value = S.aiWeb; web.addEventListener('change', () => { S.aiWeb = web.value; saveS(); });
+    const tk = $('#setT3kKey'); tk.value = S.t3kKey; tk.addEventListener('change', () => { S.t3kKey = tk.value.trim(); saveS(); });
+    const ta = $('#setT3kArch'); ta.value = S.t3kArch; ta.addEventListener('change', () => { S.t3kArch = ta.value; saveS(); });
+    $('#setRedirect').textContent = T3K.redirect;
+    $('#btnCopyRedirect').addEventListener('click', () => copyText(T3K.redirect));
+    $('#btnPersist').addEventListener('click', async () => {
+      try { const ok = await navigator.storage?.persist?.(); toast(ok ? 'Penyimpanan dibuat permanen' : 'Browser menolak; pasang aplikasi ke layar utama lalu coba lagi', 4000); } catch { toast('Tidak didukung'); }
+      this.paintStorage();
+    });
+    $('#btnWipe').addEventListener('click', () => { $('#wipeConfirm').hidden = false; });
+    $('#btnWipeNo').addEventListener('click', () => { $('#wipeConfirm').hidden = true; });
+    $('#btnWipeYes').addEventListener('click', async () => {
+      for (const s of ['takes', 'tones', 'presets', 'files']) await DB.clear(s).catch(() => {});
+      try { localStorage.removeItem(SKEY); localStorage.removeItem('rigsaku:t3k'); } catch {}
+      location.reload();
+    });
+  },
+};
+
+// ─── Mulai ───────────────────────────────────────────────────────────────────
+async function boot() {
+  envBanners();
+  Tabs.init(); Settings.init(); Lab.init();
+  Control.init(); Rec.init(); IRTest.init(); Tones.init(); T3K.init();
+  AI.init(); Editor.init(); Library.init();
+  bindSeg('autoMix'); bindSeg('mixTarget'); bindSeg('mixRole'); bindSeg('mixRoom');
+  Tabs.onShow.nada = () => Tones.render();
+  Tabs.onShow.rekam = () => Takes.render();
+  Tabs.onShow.preset = () => Library.render();
+  UI.midiState();
+  const handled = await T3K.handleCallback();
+  if (!handled) Tabs.show(S.tab || 'kontrol');
+  Takes.render(); Tones.render(); Library.render();
+  // Sambung ulang otomatis bila izin MIDI sudah pernah diberikan.
+  try {
+    const st = await navigator.permissions?.query({ name: 'midi', sysex: true });
+    if (st && st.state === 'granted') Midi.connect();
+  } catch {}
+}
+document.addEventListener('DOMContentLoaded', boot);
+
+</script>
+</body>
+</html>
