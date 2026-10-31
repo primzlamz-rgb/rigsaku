@@ -462,6 +462,43 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
 .tabbar nav { grid-template-columns: repeat(4, 1fr); }
 #picker { z-index: 70; }
 
+/* ── v2.1: knob putar, contoh suara, cek fitur ───────────────────────────── */
+.dl { gap: 6px; }
+.kn { position: relative; width: 88px; height: 88px; max-width: 100%; border-radius: 50%; }
+.kn svg { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.kn.active svg { cursor: grabbing; }
+.kn.active { box-shadow: 0 0 0 3px color-mix(in srgb, var(--hue, var(--accent)) 35%, transparent); }
+.kn-in {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 58px; height: 36px; border-radius: 8px;
+  border: 2px solid var(--hue, var(--accent)); background: var(--bg); color: var(--fg); text-align: center;
+  font: 700 17px/1 var(--font-mono);
+}
+.dl .stp button { width: 40px; height: 34px; }
+.player { gap: 10px; border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.player .playbtn { min-width: 116px; min-height: 48px; font-size: 15px; }
+.player small.note { font-size: 12px; }
+.player select { min-height: 38px; }
+.prevbtn.playing, .playbtn.playing { background: var(--rec); color: #fff; border-color: transparent; }
+.pcard { cursor: pointer; }
+.pcard .ph { align-items: center; flex-wrap: wrap; }
+.chr { font: 700 10.5px/1 var(--font-label); letter-spacing: .1em; text-transform: uppercase; padding: 4px 7px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+.chr-clean { color: #4fb3e8; border-color: color-mix(in srgb, #4fb3e8 50%, var(--line)); }
+.chr-crunch { color: #e0a23a; border-color: color-mix(in srgb, #e0a23a 50%, var(--line)); }
+.chr-distorsi { color: #ef6a3a; border-color: color-mix(in srgb, #ef6a3a 50%, var(--line)); }
+.chr-high { color: #e8504f; border-color: color-mix(in srgb, #e8504f 50%, var(--line)); }
+.toggles button { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px; min-width: 56px; }
+.toggles button b { font: 700 14px/1 var(--font-label); letter-spacing: .08em; }
+.toggles button small { font: 700 10px/1 var(--font-label); letter-spacing: .12em; opacity: .8; }
+.checks { display: flex; flex-direction: column; gap: 8px; }
+.chk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--raised); }
+.chk b { flex: 1; min-width: 120px; font-size: 14px; }
+.chk .res { font: 700 12px/1 var(--font-label); letter-spacing: .08em; min-width: 76px; }
+.chk .res.ok { color: var(--ok); } .chk .res.no { color: var(--rec); } .chk .res.unk { color: var(--muted); }
+.featlist { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.featlist span b { font-weight: 600; }
+[data-feat].unsupported { opacity: .45; }
+.player a.btn { white-space: nowrap; flex: none; }
+
 </style>
 </head>
 <body>
@@ -487,10 +524,11 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
       <ol class="steps-list">
         <li><b>Sambungkan</b> GP-100 ke HP (kabel USB + OTG), lalu tekan tombol oranye.</li>
         <li><b>Pedal</b>: ganti patch dengan ◀ ▶, ketuk modul untuk ON/OFF.</li>
-        <li><b>Preset</b>: cari lagu, buka resepnya, tekan <b>Terapkan</b>. Lalu putar knob di pedal sesuai angka di resep dan SAVE di pedal.</li>
+        <li><b>Preset</b>: cari lagu, tekan <b>▶ Dengar</b> untuk contoh suara, buka resepnya, lalu <b>Terapkan</b>. Model dan knob disetel di pedal sesuai angka di resep, lalu SAVE di pedal.</li>
         <li><b>Rekam</b>: rekam permainan Anda, hasilnya dirapikan otomatis.</li>
       </ol>
-      <p class="note">Aplikasi bisa menyalakan/mematikan modul, ganti patch, volume, tuner, drum, looper. Memutar knob (gain, treble, dll.) dari HP <b>belum bisa</b>, jadi angka knob ditampilkan sebagai panduan.</p>
+      <div class="featlist" id="featSummary"></div>
+      <div class="row"><button class="btn sm" id="btnGoChecks">Cek fitur di pedal saya</button></div>
     </div>
 
     <div class="card" id="connectCard">
@@ -528,22 +566,22 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
     </div>
 
     <div class="card">
-      <div class="slider"><label for="slPatchVol">Volume patch</label><output id="oPatchVol">—</output><input type="range" id="slPatchVol" min="0" max="100" value="50" data-cc="patchVolume"></div>
+      <div class="slider" data-feat="vol"><label for="slPatchVol">Volume patch</label><output id="oPatchVol">—</output><input type="range" id="slPatchVol" min="0" max="100" value="50" data-cc="patchVolume"></div>
       <div class="slider"><label for="slExp">Expression (wah / pedal)</label><output id="oExp">—</output><input type="range" id="slExp" min="0" max="100" value="0" data-cc="expression"></div>
       <div class="row">
-        <button class="btn" id="btnTuner" aria-pressed="false">Tuner</button>
+        <button class="btn" id="btnTuner" aria-pressed="false" data-feat="tuner">Tuner</button>
         <button class="btn" id="btnTap">Tap tempo</button>
         <div class="num" aria-label="BPM">
           <button data-bpm="-1" aria-label="Kurangi BPM">−</button>
           <input id="bpm" type="number" inputmode="numeric" min="40" max="250" value="120">
           <button data-bpm="1" aria-label="Tambah BPM">+</button>
         </div>
-        <button class="btn sm" id="btnSendBpm">Kirim BPM</button>
+        <button class="btn sm" id="btnSendBpm" data-feat="bpm">Kirim BPM</button>
       </div>
       <div class="row"><button class="btn ghost sm" id="btnStage" disabled>Mode Panggung (tombol besar)</button></div>
     </div>
 
-    <details class="card fold">
+    <details class="card fold" data-feat="drum">
       <summary><h2>Drum</h2><span class="note">pola drum bawaan pedal</span></summary>
       <div class="row" style="margin-top:10px">
         <button class="btn" id="btnDrumPlay" aria-pressed="false">▶ Main</button>
@@ -558,7 +596,7 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
       <div class="slider"><label for="slDrumVol">Volume drum</label><output id="oDrumVol">—</output><input type="range" id="slDrumVol" min="0" max="100" value="50" data-cc="drumVolume"></div>
     </details>
 
-    <details class="card fold">
+    <details class="card fold" data-feat="looper">
       <summary><h2>Looper</h2><span class="note">looper 90 detik di pedal</span></summary>
       <div class="row" style="margin-top:10px">
         <button class="btn" id="btnLoopRec">● Rekam / Overdub</button>
@@ -741,6 +779,12 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
       </div>
     </details>
 
+    <div class="card" id="checksCard">
+      <div class="card-h"><h2>Cek fitur di pedal saya</h2><span class="sub">±2 menit</span></div>
+      <p class="note">Tekan <b>Coba</b>, lihat pedal, lalu jawab apakah pedal merespon. Hasilnya dipakai aplikasi untuk menandai fitur yang benar-benar jalan di GP-100 Anda.</p>
+      <div class="checks" id="checks"></div>
+    </div>
+
     <div class="card">
       <div class="card-h"><h2>Bantu buka edit knob</h2></div>
       <p class="note">Supaya knob bisa diputar dari HP, saya perlu melihat apakah pedal "berbicara" saat knobnya diputar. Tes ini aman dan hanya mendengarkan.</p>
@@ -867,7 +911,7 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
     </section>
     <section>
       <h3>Tentang</h3>
-      <p class="note">Rig Saku v2.0 · kontrol lewat MIDI CC GP-100 · rekaman WAV lewat USB audio · katalog model khusus GP-100. Bukan aplikasi resmi Valeton.</p>
+      <p class="note">Rig Saku v2.1 · kontrol lewat MIDI CC GP-100 · rekaman WAV lewat USB audio · katalog model khusus GP-100. Bukan aplikasi resmi Valeton.</p>
     </section>
   </div>
 </div>
@@ -1040,6 +1084,7 @@ const Tabs = {
     if (!$('#tab-' + name)) name = 'pedal';
     $$('.panel').forEach((p) => p.classList.toggle('active', p.id === 'tab-' + name));
     $$('.tabbar button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+    if (typeof Preview !== 'undefined' && Preview.key && Preview.key.startsWith('c:') && name !== 'preset') Preview.stop();
     S.tab = name; saveS();
     window.scrollTo({ top: 0 });
     if (this.onShow[name]) this.onShow[name]();
@@ -1631,6 +1676,7 @@ const Rec = {
 
   async start() {
     if (!this.node) { toast('Aktifkan audio dulu'); return; }
+    if (typeof Preview !== 'undefined') Preview.stop();
     await this.ensureCtx();
     const ctx = this.ctx, spb = 60 / S.bpm, beats = 4 * (S.countIn || 0);
     const t0 = ctx.currentTime + 0.12, countDur = beats * spb;
@@ -2408,40 +2454,75 @@ function recipeText(p) {
   return lines.join('\n');
 }
 
-// ─── Dial knob (tampilan) + tombol −/+ ───────────────────────────────────────
+// ─── Knob: putar dengan jari, ketuk angka untuk mengetik, atau −/+ ─────────────
 function dial(p, value, hue, onChange) {
   const range = p.max - p.min || 1;
   const step = range > 400 ? 10 : p.step;
   const dec = String(step).includes('.') ? String(step).split('.')[1].length : 0;
   let v = value;
-  const NS = 'http://www.w3.org/2000/svg', C = 38, R = 31, A0 = 135, SW = 270;
+  const NS = 'http://www.w3.org/2000/svg', C = 44, R = 36, A0 = 135, SW = 270;
   const pt = (deg, r) => { const a = deg * Math.PI / 180; return [C + r * Math.cos(a), C + r * Math.sin(a)]; };
   const arc = (from, to, r) => { const [x1, y1] = pt(from, r), [x2, y2] = pt(to, r); return `M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${to - from > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`; };
-  const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 76 76'); svg.setAttribute('aria-hidden', 'true');
+  const svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 88 88');
   const mk = (tag, at) => { const e = document.createElementNS(NS, tag); for (const [k, x] of Object.entries(at)) e.setAttribute(k, x); svg.append(e); return e; };
-  mk('path', { d: arc(A0, A0 + SW, R), fill: 'none', stroke: 'var(--line)', 'stroke-width': 6, 'stroke-linecap': 'round' });
-  const val = mk('path', { d: '', fill: 'none', stroke: hue, 'stroke-width': 6, 'stroke-linecap': 'round' });
-  mk('circle', { cx: C, cy: C, r: 21, fill: 'var(--raised)', stroke: 'var(--line)', 'stroke-width': 1 });
-  const tick = mk('line', { stroke: hue, 'stroke-width': 3, 'stroke-linecap': 'round' });
-  const txt = mk('text', { x: C, y: C + 6, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-family': 'var(--font-mono)', 'font-size': 16, 'font-weight': 700 });
+  mk('path', { d: arc(A0, A0 + SW, R), fill: 'none', stroke: 'var(--line)', 'stroke-width': 7, 'stroke-linecap': 'round' });
+  const val = mk('path', { d: '', fill: 'none', stroke: hue, 'stroke-width': 7, 'stroke-linecap': 'round' });
+  mk('circle', { cx: C, cy: C, r: 26, fill: 'var(--raised)', stroke: 'var(--line)', 'stroke-width': 1.5 });
+  const tick = mk('line', { stroke: hue, 'stroke-width': 3.5, 'stroke-linecap': 'round' });
+  const txt = mk('text', { x: C, y: C + 6.5, 'text-anchor': 'middle', fill: 'var(--fg)', 'font-family': 'var(--font-mono)', 'font-size': 18, 'font-weight': 700 });
+  const box = h('div', { class: 'kn', role: 'slider', tabindex: 0, 'aria-label': p.n, 'aria-valuemin': p.min, 'aria-valuemax': p.max }, svg);
   const paint = () => {
     const f = (v - p.min) / range, deg = A0 + SW * f;
     val.setAttribute('d', f > 0.002 ? arc(A0, deg, R) : '');
-    const [x1, y1] = pt(deg, 22.5), [x2, y2] = pt(deg, 27.5);
+    const [x1, y1] = pt(deg, 27), [x2, y2] = pt(deg, 33);
     tick.setAttribute('x1', x1); tick.setAttribute('y1', y1); tick.setAttribute('x2', x2); tick.setAttribute('y2', y2);
-    txt.textContent = (+v).toFixed(dec);
+    txt.textContent = (+v).toFixed(dec); box.setAttribute('aria-valuenow', v);
   };
   const set = (nv) => { nv = +clamp(Math.round(nv / step) * step, p.min, p.max).toFixed(dec); if (nv !== v) { v = nv; paint(); onChange(v); } };
+
+  // Putar: ikuti sudut jari terhadap pusat knob (atau geser atas/bawah bila jari dekat pusat).
+  let drag = null;
+  const angle = (e) => { const r = svg.getBoundingClientRect(); return { a: Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180 / Math.PI, d: Math.hypot(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2)) }; };
+  svg.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); svg.setPointerCapture(e.pointerId);
+    const g = angle(e); drag = { a: g.a, y: e.clientY, x: e.clientX, v, moved: false, t: Date.now() };
+    box.classList.add('active');
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const g = angle(e);
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 5) drag.moved = true;
+    if (!drag.moved) return;
+    if (g.d > 14) { let da = g.a - drag.a; if (da > 180) da -= 360; if (da < -180) da += 360; drag.a = g.a; drag.v = clamp(drag.v + da / SW * range, p.min, p.max); }
+    else { drag.v = clamp(drag.v + (drag.y - e.clientY) / 160 * range, p.min, p.max); }
+    drag.y = e.clientY; set(drag.v);
+  });
+  const end = () => { if (!drag) return; const tap = !drag.moved && Date.now() - drag.t < 450; drag = null; box.classList.remove('active'); if (tap) edit(); };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', () => { drag = null; box.classList.remove('active'); });
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { set(v + step); e.preventDefault(); }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { set(v - step); e.preventDefault(); }
+    else if (e.key === 'Enter') { edit(); e.preventDefault(); }
+  });
+  // Ketik angka langsung
+  const edit = () => {
+    if ($('input', box)) return;
+    const inp = h('input', { class: 'kn-in', type: 'text', inputmode: 'decimal', value: (+v).toFixed(dec), 'aria-label': `Nilai ${p.n}` });
+    box.append(inp); inp.focus(); inp.select();
+    let closed = false;
+    const done = (ok) => { if (closed) return; closed = true; if (ok) { const n = parseFloat(String(inp.value).replace(',', '.')); if (isFinite(n)) set(n); } if (inp.isConnected) inp.remove(); };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); });
+    inp.addEventListener('blur', () => done(true));
+  };
   const hold = (btn, dir) => {
-    let t1 = 0, t2 = 0;
-    const stop = () => { clearTimeout(t1); clearInterval(t2); };
+    let t1 = 0, t2 = 0; const stop = () => { clearTimeout(t1); clearInterval(t2); };
     btn.addEventListener('pointerdown', (e) => { e.preventDefault(); set(v + dir * step); t1 = setTimeout(() => { t2 = setInterval(() => set(v + dir * step), 70); }, 380); });
     for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) btn.addEventListener(ev, stop);
     btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); set(v + dir * step); } });
     return btn;
   };
   paint();
-  return h('div', { class: 'dl' }, svg, h('div', { class: 'nm', text: p.n }),
+  return h('div', { class: 'dl' }, box, h('div', { class: 'nm', text: p.n }),
     h('div', { class: 'stp' }, hold(h('button', { 'aria-label': `Kurangi ${p.n}`, text: '−' }), -1), hold(h('button', { 'aria-label': `Tambah ${p.n}`, text: '+' }), 1)));
 }
 
@@ -2468,41 +2549,71 @@ const Picker = {
 // ─── Layar resep ─────────────────────────────────────────────────────────────
 const Recipe = {
   cur: null, saveT: 0,
+  get live() { return !!(this.cur && S.active && S.active.id === this.cur.id && Midi.connected); },
   open(r) {
+    if (Preview.key && Preview.key !== 'rc') Preview.stop();
     this.cur = normRecipe(JSON.parse(JSON.stringify(r)));
     $('#rcTitle').textContent = this.cur.name;
     this.render();
     $('#recipe').hidden = false; $('#rcBody').scrollTop = 0;
   },
-  close() { $('#recipe').hidden = true; if (this.cur && this.cur.saved) Library.render(); },
+  close() { if (Preview.key === 'rc') Preview.stop(); $('#recipe').hidden = true; if (this.cur && this.cur.saved) Library.render(); },
   changed() {
     const c = this.cur;
-    if (S.active && S.active.id === c.id) { S.active = JSON.parse(JSON.stringify(c)); saveS(); }
+    if (S.active && S.active.id === c.id) { S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive(); }
     if (c.saved) { clearTimeout(this.saveT); this.saveT = setTimeout(() => DB.put('presets', c).catch(() => {}), 400); }
+    Preview.update(c, 'rc');
+  },
+  player() {
+    const c = this.cur, ch = character(c);
+    const btn = h('button', { class: 'btn primary playbtn', dataset: { prev: 'rc' }, text: Preview.key === 'rc' ? '■ Stop' : '▶ Dengar', onclick: () => {
+      if (Preview.key === 'rc') Preview.stop(); else Preview.play(this.cur, 'rc', riffSel.dataset.v || ch.riff);
+    } });
+    const riffSel = h('div', { class: 'seg', dataset: { v: Preview.key === 'rc' ? Preview.riff : ch.riff } }, Object.entries(RIFF_LABEL).map(([k, lbl]) => h('button', {
+      class: (Preview.key === 'rc' ? Preview.riff : ch.riff) === k ? 'sel' : '', text: lbl, onclick: (e) => {
+        riffSel.dataset.v = k; $$('button', riffSel).forEach((b) => b.classList.toggle('sel', b === e.currentTarget));
+        Preview.source = 'synth'; srcSel.value = 'synth';
+        if (Preview.key === 'rc') Preview.setRiff(k); else Preview.play(this.cur, 'rc', k);
+      } })));
+    const srcSel = h('select', { class: 'input', 'aria-label': 'Sumber suara', onchange: (e) => { Preview.setSource(e.target.value); if (Preview.key !== 'rc') Preview.play(this.cur, 'rc', riffSel.dataset.v); } },
+      h('option', { value: 'synth', text: 'Gitar contoh' }));
+    DB.all('takes').then((ts) => { ts.forEach((t) => srcSel.append(h('option', { value: 'take:' + t.id, text: 'Rekaman: ' + t.name }))); srcSel.value = Preview.source; }).catch(() => {});
+    const yt = `https://www.youtube.com/results?search_query=${encodeURIComponent((c.song || c.name) + ' guitar tone')}`;
+    return h('div', { class: 'card player' },
+      h('div', { class: 'row nowrap' }, btn, h('div', { class: 'grow' }, h('b', { text: 'Contoh suara' }), h('small', { class: 'note', style: { display: 'block' }, text: `Karakter: ${ch.label} · berubah saat knob diputar` }))),
+      riffSel,
+      h('div', { class: 'row nowrap' }, srcSel, h('a', { class: 'btn sm ghost', href: yt, target: '_blank', rel: 'noopener', text: 'Lagu asli ↗' })),
+      h('p', { class: 'note', text: 'Simulasi kasar di HP untuk gambaran karakter, bukan suara asli GP-100. Pakai headphone. Untuk suara sesungguhnya, terapkan lalu mainkan gitar Anda.' }));
   },
   render() {
     const c = this.cur, body = $('#rcBody'); body.innerHTML = '';
     const onCount = MODULES.filter((m) => c.modules[m.id].on).length;
     body.append(h('div', { class: 'rc-head' }, h('h1', { text: c.name }),
-      h('p', { text: [c.song && c.song !== c.name ? c.song : '', c.bpm && `${c.bpm} BPM`, `${onCount} modul ON`, c.builtin ? 'preset bawaan (perkiraan)' : c.fromAI ? 'dibuat AI' : ''].filter(Boolean).join(' · ') })));
+      h('p', { text: [c.song && c.song !== c.name ? c.song : '', c.bpm && `${c.bpm} BPM`, character(c).label, c.builtin ? 'preset bawaan (perkiraan)' : c.fromAI ? 'dibuat AI' : ''].filter(Boolean).join(' · ') })));
+    body.append(this.player());
 
-    const status = h('div', { class: 'applied', hidden: true });
-    const applyBtn = h('button', { class: 'btn primary', text: 'Terapkan ke pedal', onclick: () => this.apply(status, applyBtn) });
+    const status = h('div', { class: this.live ? 'applied' : 'note', text: this.live ? '● Preset ini aktif di pedal. ON/OFF modul di bawah langsung terkirim.' : 'Belum diterapkan. Mengubah resep tidak mengubah pedal sampai Anda menekan Terapkan.' });
+    const applyBtn = h('button', { class: 'btn primary', text: this.live ? 'Terapkan ulang ke pedal' : 'Terapkan ke pedal', onclick: () => this.apply(status, applyBtn) });
     body.append(h('div', { class: 'card applybox' },
       h('ol', { class: 'steps-list' },
         h('li', {}, 'Di pedal, pilih patch yang boleh ditimpa.'),
-        h('li', {}, 'Tekan ', h('b', { text: 'Terapkan ke pedal' }), ' → modul ON/OFF diatur otomatis.'),
-        h('li', {}, 'Di pedal, pilih model dan putar knob sesuai angka di bawah.'),
-        h('li', {}, 'Tekan ', h('b', { text: 'SAVE' }), ' di pedal supaya tersimpan.')),
+        h('li', {}, 'Tekan ', h('b', { text: 'Terapkan ke pedal' }), ': modul ON/OFF diatur otomatis.'),
+        h('li', {}, 'Di pedal, pilih model dan putar knob sesuai angka di bawah, lalu tekan ', h('b', { text: 'SAVE' }), '.')),
       applyBtn, status));
 
-    // Pilih modul yang ON di resep
-    const tg = h('div', { class: 'toggles' }, MODULES.map((m) => h('button', { class: c.modules[m.id].on ? 'on' : '', style: { '--hue': m.hue }, 'aria-pressed': String(c.modules[m.id].on), text: m.id, onclick: () => {
-      const d = c.modules[m.id]; d.on = !d.on;
-      if (d.on && !d.model && !d.ref && (CAT.byMod[m.id] || []).length) { Picker.open(m.id, '', (e) => { c.modules[m.id] = buildModule(m.id, { on: true, model: e.name }); this.changed(); this.render(); }); }
-      this.changed(); this.render();
-    } })));
-    body.append(h('div', { class: 'field' }, h('span', { text: 'Modul di resep ini (ketuk untuk ON/OFF)' }), tg));
+    // Modul di resep: ON/OFF
+    const tg = h('div', { class: 'toggles' }, MODULES.map((m) => {
+      const d = c.modules[m.id];
+      return h('button', { class: d.on ? 'on' : '', style: { '--hue': m.hue }, 'aria-pressed': String(d.on), onclick: () => {
+        d.on = !d.on;
+        if (this.live) Control.setMod(m.id, d.on);
+        if (d.on && !d.model && !d.ref && (CAT.byMod[m.id] || []).length) {
+          Picker.open(m.id, '', (e) => { c.modules[m.id] = buildModule(m.id, { on: true, model: e.name }); this.changed(); this.render(); });
+        }
+        this.changed(); this.render();
+      } }, h('b', { text: m.id }), h('small', { text: d.on ? 'ON' : 'OFF' }));
+    }));
+    body.append(h('div', { class: 'field' }, h('span', { text: 'Modul dalam preset ini · ketuk untuk ON/OFF' }), tg));
 
     for (const m of MODULES) {
       const d = c.modules[m.id]; if (!d.on) continue;
@@ -2514,21 +2625,19 @@ const Recipe = {
             h('b', { text: d.model || (m.id === 'CAB' ? 'Kabinet' : 'Pilih model') }),
             h('small', { text: d.ref ? (d.model ? 'Meniru: ' + d.ref : d.ref + ' · pilih yang paling mirip di pedal') : (e ? '' : 'ketuk untuk memilih') }))));
       if (e) {
-        const knobs = e.params.filter((p) => p.t === 'k'), opts = e.params.filter((p) => p.t !== 'k');
-        if (knobs.length) card.append(h('div', { class: 'dials' }, knobs.map((p) => dial(p, d.params[p.n] ?? p.d, m.hue, (v) => { d.params[p.n] = v; this.changed(); }))));
-        for (const p of opts) {
-          const seg = h('div', { class: 'seg' }, p.opts.map((o) => h('button', { class: (d.params[p.n] ?? p.d) === o.v ? 'sel' : '', text: o.n, onclick: (ev) => { d.params[p.n] = o.v; $$('button', seg).forEach((b) => b.classList.toggle('sel', b === ev.currentTarget)); this.changed(); } })));
-          card.append(h('div', { class: 'optrow' }, h('span', { text: p.n }), seg));
+        const knobs = e.params.filter((q) => q.t === 'k'), opts = e.params.filter((q) => q.t !== 'k');
+        if (knobs.length) card.append(h('div', { class: 'dials' }, knobs.map((q) => dial(q, d.params[q.n] ?? q.d, m.hue, (val) => { d.params[q.n] = val; this.changed(); }))));
+        for (const q of opts) {
+          const seg = h('div', { class: 'seg' }, q.opts.map((o) => h('button', { class: (d.params[q.n] ?? q.d) === o.v ? 'sel' : '', text: o.n, onclick: (ev) => { d.params[q.n] = o.v; $$('button', seg).forEach((b) => b.classList.toggle('sel', b === ev.currentTarget)); this.changed(); } })));
+          card.append(h('div', { class: 'optrow' }, h('span', { text: q.n }), seg));
         }
       } else if (Object.keys(d.params).length) {
-        card.append(h('div', { class: 'dials' }, Object.entries(d.params).map(([k, v]) => dial({ n: k, min: 0, max: 99, step: 1, d: v }, v, m.hue, (nv) => { d.params[k] = nv; this.changed(); }))));
+        card.append(h('div', { class: 'dials' }, Object.entries(d.params).map(([k, val]) => dial({ n: k, min: 0, max: 99, step: 1, d: val }, val, m.hue, (nv) => { d.params[k] = nv; this.changed(); }))));
       }
       body.append(card);
     }
-    const off = MODULES.filter((m) => !c.modules[m.id].on).map((m) => m.id);
-    if (off.length) body.append(h('p', { class: 'note', text: `OFF di pedal: ${off.join(', ')}` }));
     if (c.tips || (c.namIr && c.namIr.advice)) body.append(h('div', { class: 'tipbox' }, h('b', { text: 'Tips' }), c.tips || '', c.namIr && c.namIr.advice ? h('p', { class: 'note', style: { marginTop: '6px' }, text: 'NAM/IR: ' + c.namIr.advice }) : null));
-    body.append(h('p', { class: 'note', text: 'Angka knob 0–99 seperti di layar pedal. PRES = Presence, Master/Output/VOL = Volume.' }));
+    body.append(h('p', { class: 'note', text: 'Putar knob dengan jari, atau ketuk angkanya untuk mengetik. Angka 0–99 seperti di layar pedal (PRES = Presence; Master/Output/VOL = Volume). Nilai knob belum bisa dikirim ke pedal.' }));
 
     const acts = h('div', { class: 'rc-actions' });
     if (c.saved) {
@@ -2540,7 +2649,9 @@ const Recipe = {
       body.append(acts, cr);
     } else {
       acts.append(h('button', { class: 'btn', text: 'Simpan ke Preset saya', onclick: async () => {
+        const wasActive = S.active && S.active.id === c.id;
         c.saved = true; c.builtin = false; c.id = uid(); c.created = Date.now();
+        if (wasActive) { S.active = JSON.parse(JSON.stringify(c)); saveS(); }
         try { await DB.put('presets', c); toast('Disimpan ke Preset saya'); Library.render(); this.render(); } catch (err) { toast('Gagal menyimpan: ' + err.message); }
       } }));
       body.append(acts);
@@ -2550,7 +2661,7 @@ const Recipe = {
     btn.disabled = true;
     const ok = await Control.ensureConnected();
     btn.disabled = false;
-    if (!ok) { status.hidden = false; status.className = 'result-no'; status.textContent = 'Pedal belum tersambung. Colok GP-100 lewat OTG, nyalakan, lalu tekan lagi.'; return; }
+    if (!ok) { status.className = 'result-no'; status.textContent = 'Pedal belum tersambung. Colok GP-100 lewat OTG, nyalakan, lalu tekan lagi.'; return; }
     const c = this.cur; let fail = 0;
     for (const m of MODULES) if (!Control.setMod(m.id, !!c.modules[m.id].on)) fail++;
     if (c.patchVolume !== '' && c.patchVolume != null) Midi.cc(CC.patchVolume, clamp(+c.patchVolume, 0, 100));
@@ -2558,8 +2669,9 @@ const Recipe = {
     S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive();
     const named = Control.namePatch(c.name);
     const on = MODULES.filter((m) => c.modules[m.id].on).length;
-    status.hidden = false; status.className = fail ? 'result-no' : 'applied';
-    status.textContent = fail ? `Sebagian perintah gagal (${fail}). Coba tekan lagi.` : `✓ Terkirim${named ? ' ke patch ' + String(S.patchNum).padStart(2, '0') : ''}: ${on} modul ON, ${9 - on} OFF. Sekarang setel model & knob di pedal, lalu SAVE.`;
+    if (fail) { status.className = 'result-no'; status.textContent = `Sebagian perintah gagal (${fail}). Coba tekan lagi.`; return; }
+    this.render();
+    toast(`Terkirim${named ? ' ke patch ' + String(S.patchNum).padStart(2, '0') : ''}: ${on} modul ON, ${9 - on} OFF`, 3500);
   },
   init() {
     $('#rcBack').addEventListener('click', () => this.close());
@@ -2572,12 +2684,15 @@ const CHIPS = [['Semua', ''], ['Clean', 'clean funk pop worship akustik'], ['Blu
 const Library = {
   chip: '',
   card(r, tag) {
-    const on = MODULES.filter((m) => r.modules[m.id].on);
-    return h('button', { class: 'pcard', onclick: () => Recipe.open(r) },
-      h('div', { class: 'ph' }, h('b', { text: r.name }), tag ? h('span', { class: 'tag', text: tag }) : null),
+    const on = MODULES.filter((m) => r.modules[m.id].on), ch = character(r), key = 'c:' + r.id;
+    const el = h('div', { class: 'pcard', role: 'button', tabindex: 0, onclick: () => Recipe.open(r), onkeydown: (e) => { if (e.key === 'Enter') Recipe.open(r); } },
+      h('div', { class: 'ph' }, h('b', { text: r.name }), h('span', { class: 'chr chr-' + ch.label.split(' ')[0].toLowerCase(), text: ch.label }), tag ? h('span', { class: 'tag', text: tag }) : null),
       r.song && r.song !== r.name ? h('small', { text: r.song }) : null,
       h('div', { class: 'chain' }, on.map((m) => h('span', { class: 'c on', style: { '--hue': m.hue }, text: r.modules[m.id].model ? `${m.id} · ${r.modules[m.id].model}` : m.id }))),
-      h('span', { class: 'go', text: 'Buka resep →' }));
+      h('div', { class: 'row nowrap' },
+        h('button', { class: 'btn sm prevbtn' + (Preview.key === key ? ' playing' : ''), dataset: { prev: key }, text: Preview.key === key ? '■ Stop' : '▶ Dengar', onclick: (e) => { e.stopPropagation(); Preview.toggle(r, key); } }),
+        h('span', { class: 'go grow', text: 'Buka resep →' })));
+    return el;
   },
   search() {
     const q = CAT.norm($('#libSearch').value);
@@ -2753,6 +2868,282 @@ Semua teks Bahasa Indonesia.`;
   },
 };
 
+// ─── Contoh suara: gitar sintetis + simulasi kasar rantai efek (Web Audio) ───
+// Tujuannya memberi gambaran karakter (clean / crunch / high gain, delay, reverb),
+// bukan meniru persis suara GP-100.
+
+const Synth = {
+  cache: {},
+  freq: (m) => 440 * Math.pow(2, (m - 69) / 12),
+  /** Karplus-Strong: satu senar dipetik. */
+  pluck(buf, sr, t0, midi, dur, o = {}) {
+    const f = this.freq(midi), N = Math.max(2, Math.round(sr / f - 0.5));
+    const start = Math.round(t0 * sr), len = Math.min(buf.length - start, Math.round(dur * sr));
+    if (len <= 0 || start < 0) return;
+    const line = new Float32Array(N);
+    let lp = 0, mean = 0; const br = o.bright ?? 0.55;
+    for (let i = 0; i < N; i++) { lp += br * ((Math.random() * 2 - 1) - lp); line[i] = lp; mean += lp; }
+    mean /= N; for (let i = 0; i < N; i++) line[i] -= mean;
+    const t60 = o.t60 ?? 3, loss = Math.pow(0.001, 1 / (t60 * f)), amp = o.amp ?? 0.45;
+    const fade = Math.min(len, Math.round(0.02 * sr));
+    let idx = 0;
+    for (let n = 0; n < len; n++) {
+      const a = line[idx], b = line[(idx + 1) % N];
+      line[idx] = loss * 0.5 * (a + b);
+      const env = n > len - fade ? (len - n) / fade : 1;
+      buf[start + n] += a * amp * env;
+      idx = (idx + 1) % N;
+    }
+  },
+  strum(buf, sr, t, notes, dur, o = {}) { notes.forEach((m, i) => this.pluck(buf, sr, t + i * (o.spread ?? 0.012), m, dur, o)); },
+
+  riffs: {
+    clean: { bpm: 84, bars: 4, build(S, buf, sr, b) {
+      const ch = [[40, 47, 52, 55, 59, 66], [48, 52, 55, 59, 64], [43, 47, 50, 55, 59, 67], [50, 57, 62, 66, 69]];
+      const pat = [0, 2, 3, 4, 5, 4, 3, 2];
+      ch.forEach((c, bar) => pat.forEach((k, i) => S.pluck(buf, sr, (bar * 8 + i) * b / 2, c[Math.min(k, c.length - 1)], b * 3, { t60: 2.6, bright: 0.5, amp: 0.38 })));
+    } },
+    crunch: { bpm: 100, bars: 4, build(S, buf, sr, b) {
+      const E5 = [40, 47, 52], D5 = [50, 57, 62], A5 = [45, 52, 57], G5 = [43, 50, 55];
+      const hits = [[0, E5, 1.4], [1.5, D5, 0.45], [2, A5, 0.9], [3, E5, 0.9], [4, E5, 1.4], [5.5, G5, 0.45], [6, A5, 0.45], [6.5, D5, 1.3],
+        [8, E5, 1.4], [9.5, D5, 0.45], [10, A5, 0.9], [11, E5, 0.9], [12, G5, 0.9], [13, A5, 0.9], [14, E5, 1.8]];
+      for (const [beat, c, len] of hits) S.strum(buf, sr, beat * b, c, len * b, { t60: 1.8, bright: 0.65, amp: 0.4 });
+    } },
+    metal: { bpm: 140, bars: 4, build(S, buf, sr, b) {
+      const s = b / 4; let t = 0;
+      const pm = (n = 1) => { for (let i = 0; i < n; i++) { S.strum(buf, sr, t, [40, 47], s * 0.9, { t60: 0.09, bright: 0.4, amp: 0.5, spread: 0.004 }); t += s; } };
+      const acc = (c, len) => { S.strum(buf, sr, t, c, len * s, { t60: 1.2, bright: 0.7, amp: 0.45, spread: 0.006 }); t += len * s; };
+      for (let bar = 0; bar < 4; bar++) { pm(3); acc([41, 48, 53], 1); pm(2); acc([43, 50, 55], 2); pm(4); acc(bar % 2 ? [46, 53, 58] : [45, 52, 57], 4); }
+    } },
+    lead: { bpm: 90, bars: 4, build(S, buf, sr, b) {
+      const line = [[0, 64, 1], [1, 67, 0.5], [1.5, 69, 0.5], [2, 71, 1.5], [3.5, 69, 0.5], [4, 74, 1], [5, 71, 0.5], [5.5, 69, 0.5], [6, 67, 2],
+        [8, 69, 0.5], [8.5, 71, 0.5], [9, 74, 1], [10, 76, 2], [12, 74, 0.5], [12.5, 71, 0.5], [13, 69, 1], [14, 64, 2]];
+      for (const [beat, m, len] of line) S.pluck(buf, sr, beat * b, m, len * b + 0.15, { t60: 4, bright: 0.7, amp: 0.5 });
+      [[0, [40, 47, 52]], [4, [48, 55, 60]], [8, [43, 50, 55]], [12, [45, 52, 57]]].forEach(([beat, c]) => S.strum(buf, sr, beat * b, c, 4 * b, { t60: 3, bright: 0.35, amp: 0.12 }));
+    } },
+  },
+  buffer(ctx, name) {
+    const key = name + ':' + ctx.sampleRate;
+    if (this.cache[key]) return this.cache[key];
+    const r = this.riffs[name], sr = ctx.sampleRate, b = 60 / r.bpm, dur = r.bars * 4 * b;
+    const data = new Float32Array(Math.round(dur * sr));
+    r.build(this, data, sr, b);
+    let pk = 0; for (const v of data) pk = Math.max(pk, Math.abs(v));
+    if (pk > 0) for (let i = 0; i < data.length; i++) data[i] *= 0.6 / pk;
+    const ab = ctx.createBuffer(1, data.length, sr); ab.copyToChannel(data, 0);
+    return (this.cache[key] = ab);
+  },
+};
+
+const FXSim = {
+  irCache: {},
+  curve(k, asym = 0) {
+    const n = 2048, c = new Float32Array(n); let m = 0;
+    for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; c[i] = Math.tanh(k * (x + asym)) - Math.tanh(k * asym); m = Math.max(m, Math.abs(c[i])); }
+    for (let i = 0; i < n; i++) c[i] /= m || 1;
+    return c;
+  },
+  ir(ctx, sec, bright, metallic) {
+    const key = [sec.toFixed(1), bright, metallic ? 1 : 0, ctx.sampleRate].join(':');
+    if (this.irCache[key]) return this.irCache[key];
+    const sr = ctx.sampleRate, len = Math.round(sec * sr), ir = ctx.createBuffer(2, len, sr);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c); let lp = 0;
+      for (let i = 0; i < len; i++) {
+        const t = i / sr, k = bright * (1 - 0.7 * t / sec);
+        lp += k * ((Math.random() * 2 - 1) - lp);
+        d[i] = lp * Math.exp(-6.9 * t / sec) * (t < 0.005 ? t / 0.005 : 1);
+      }
+      if (metallic) { const D = Math.round(0.0067 * sr); for (let i = len - 1; i >= D; i--) d[i] += 0.55 * d[i - D]; }
+    }
+    return (this.irCache[key] = ir);
+  },
+  ampClass(name) {
+    if (/bass/i.test(name)) return 'bass';
+    if (/^AC Pre/.test(name)) return 'ac';
+    if (/(CL\b|Twin|Tweedy|Bellman|J-120|Foxy 30N)/.test(name)) return 'clean';
+    if (/(LD\b|Dual|EV 51|Dizz|Eagle|Power|Mess4|RedM|Flagman\+|Mess2C)/.test(name)) return 'hi';
+    return 'crunch';
+  },
+  /** Bangun graf audio dari resep. */
+  build(ctx, r) {
+    const nodes = [], oscs = [];
+    const G = (v = 1) => { const g = ctx.createGain(); g.gain.value = v; return g; };
+    const F = (type, f, g = 0, q = 0.707) => { const b = ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.gain.value = g; b.Q.value = q; return b; };
+    const dB = (x) => Math.pow(10, x / 20);
+    const md = (id) => r.modules[id];
+    const on = (id) => md(id) && md(id).on;
+    const v = (id, name, def) => {
+      const p = md(id).params, want = CAT.norm(name);
+      for (const k of Object.keys(p)) if (CAT.norm(k).replace(/\d+$/, '') === want && isFinite(+p[k])) return +p[k];
+      return def;
+    };
+    const tone = (x) => (clamp(x, 0, 99) - 50) / 50; // −1..+1
+    const rate = (id, def = 1) => { const e = CAT.find(id, md(id).model), p = e && e.params.find((q) => q.n === 'Rate'); const x = v(id, 'rate', null); if (x == null) return def; return p && p.max <= 10 ? x : 0.1 + x / 99 * 8; };
+    const lfo = (hz, depth, param, type = 'sine') => { const o = ctx.createOscillator(); o.type = type; o.frequency.value = hz; const g = G(depth); o.connect(g); g.connect(param); o.start(); oscs.push(o); };
+
+    const input = G(1); let cur = input;
+    const chain = (...ns) => { for (const n of ns) { cur.connect(n); cur = n; } return cur; };
+    const parallel = (wetIn, wetOut, wet, dry = 1) => { const d = G(dry), w = G(wet), sum = G(1); cur.connect(d); cur.connect(wetIn); wetOut.connect(w); d.connect(sum); w.connect(sum); cur = sum; };
+
+    // PRE
+    if (on('PRE')) {
+      const m = md('PRE').model;
+      if (/^COMP/.test(m)) { const c = ctx.createDynamicsCompressor(); const s = v('PRE', 'sustain', 50); c.threshold.value = -12 - s * 0.32; c.ratio.value = 6; c.attack.value = 0.006; c.release.value = 0.18; chain(c, G(dB(s * 0.12 + tone(v('PRE', 'volume', 50)) * 6))); }
+      else if (m === 'Boost') chain(G(dB(v('PRE', 'gain', 50) * 0.14)), F('highshelf', 3000, 2));
+      else if (m === 'AC Sim') chain(F('highpass', 120), F('peaking', 3000, 5, 0.8), F('lowpass', 9000));
+      else if (/Wah/i.test(m)) {
+        const f = F('peaking', 900, 14, 4); chain(f, G(0.6));
+        if (m === 'A-Wah' || m === 'T-Wah') lfo(m === 'A-Wah' ? rate('PRE', 1.5) : 2.2, 650, f.frequency);
+      }
+    }
+    // DST
+    if (on('DST')) {
+      const m = md('DST').model, g = v('DST', 'gain', null) ?? v('DST', 'sustain', null) ?? v('DST', 'fuzz', 50), t = v('DST', 'tone', 50), lvl = v('DST', 'volume', 50);
+      const sh = ctx.createWaveShaper(); sh.oversample = '4x';
+      if (/Green|Super|Bass Dist/.test(m)) { chain(F('highpass', 320), F('peaking', 720, 7, 0.9), G(1 + g * 0.25)); sh.curve = this.curve(2.5); chain(sh, F('lowpass', 1400 + t * 50)); }
+      else if (/Blues|Yellow/.test(m)) { chain(F('highpass', 160), G(1 + g * 0.2)); sh.curve = this.curve(2.2, 0.05); chain(sh, F('lowpass', 1800 + t * 55)); }
+      else if (/Lazaro|Red Haze/.test(m)) { chain(G(2 + g * 0.6)); sh.curve = this.curve(4, 0.25); chain(sh, F('peaking', 800, -7, 0.7), F('lowpass', 2200 + t * 45)); }
+      else { const filt = v('DST', 'filter', null); chain(F('highpass', 110), G(2 + g * 0.45)); sh.curve = this.curve(3.5); chain(sh, F('lowpass', filt != null ? 7000 - filt * 55 : 2000 + t * 55)); }
+      chain(G(dB(tone(lvl) * 10) * 0.8));
+    }
+    // AMP
+    if (on('AMP')) {
+      const m = md('AMP').model, cls = this.ampClass(m || ''), g = v('AMP', 'gain', v('AMP', 'vol', 50)) / 99;
+      const drive = { clean: 1 + g * 3.5, crunch: 2 + g * 16, hi: 5 + g * 50, bass: 1 + g * 3, ac: 1 }[cls];
+      if (cls === 'hi') chain(F('highpass', 130), F('peaking', 1000, 3, 0.8));
+      else if (cls === 'crunch') chain(F('highpass', 90));
+      const sh = ctx.createWaveShaper(); sh.oversample = '4x'; sh.curve = this.curve(1.6, cls === 'clean' ? 0 : 0.08);
+      chain(G(drive), sh, G(cls === 'clean' || cls === 'ac' || cls === 'bass' ? 0.9 / Math.tanh(1.6 * Math.min(drive * 0.6, 1)) * 0.6 : 0.6));
+      chain(F('lowshelf', 120, tone(v('AMP', 'bass', 50)) * 9), F('peaking', 650, tone(v('AMP', 'middle', 50)) * 9, 0.7),
+        F('highshelf', 2800, tone(v('AMP', 'treble', 50)) * 9), F('highshelf', 5500, tone(v('AMP', 'presence', 50)) * 6),
+        G(dB(tone(v('AMP', 'volume', 50)) * 6)));
+    }
+    // CAB
+    if (on('CAB')) {
+      const s = `${md('CAB').model} ${md('CAB').ref}`;
+      if (/^(D|OM|Jumbo|GA)\b/.test(md('CAB').model)) chain(F('peaking', 200, 3, 1), F('peaking', 3000, 3, 1));
+      else {
+        const lp = /bass|SVT|Ameg|Max|MessBass/i.test(s) ? 3500 : /1x10|1x12|Princeton/i.test(s) ? 4300 : /4x12/i.test(s) ? 4800 : 5400;
+        chain(F('highpass', 75), F('peaking', 115, 3, 1.2), F('peaking', 2600, -3, 1.2), F('lowpass', lp, 0, 0.9), F('lowpass', lp * 1.4, 0, 0.6));
+      }
+      chain(G(dB(tone(v('CAB', 'volume', 50)) * 6)));
+    } else if (on('AMP') || on('DST')) chain(F('lowpass', 11000));
+    // EQ
+    if (on('EQ')) {
+      const e = CAT.find('EQ', md('EQ').model);
+      for (const [k, x] of Object.entries(md('EQ').params)) {
+        const m = /([\d.]+)\s*(k?)hz/i.exec(k);
+        if (m) { const p = e && e.params.find((q) => q.n === k); chain(F('peaking', +m[1] * (m[2] ? 1000 : 1), +x * (p && p.max > 20 ? 0.24 : 1), 1.1)); }
+        else if (/vol/i.test(k)) chain(G(dB(tone(+x) * 6)));
+      }
+    }
+    // MOD
+    if (on('MOD')) {
+      const m = md('MOD').model, depth = v('MOD', 'depth', 50) / 99, hz = rate('MOD', 1);
+      if (/Chorus|Detune/.test(m)) { const d = ctx.createDelay(0.05); d.delayTime.value = 0.016; lfo(hz, 0.004 * depth + 0.0005, d.delayTime); parallel(d, d, 0.6); }
+      else if (m === 'Flanger') { const d = ctx.createDelay(0.02); d.delayTime.value = 0.003; const fb = G(0.6); d.connect(fb); fb.connect(d); lfo(hz * 0.4, 0.0025 * depth + 0.0005, d.delayTime); parallel(d, d, 0.6); }
+      else if (/Phaser|Vibe/.test(m)) { const a = [0, 1, 2, 3].map(() => F('allpass', 700, 0, 0.5)); for (let i = 0; i < 3; i++) a[i].connect(a[i + 1]); a.forEach((x) => lfo(hz * 0.6, 600 * (0.3 + depth), x.frequency)); parallel(a[0], a[3], m === 'Vibe' ? 0.8 : 0.6); }
+      else if (/Trem/.test(m)) { const g = G(1 - depth * 0.45); lfo(hz * 1.2, depth * 0.45, g.gain, m === 'Triangle Trem' ? 'triangle' : 'sine'); chain(g); }
+      else if (m === 'Vibrato') { const d = ctx.createDelay(0.05); d.delayTime.value = 0.006; lfo(hz, 0.003 * depth + 0.0003, d.delayTime); chain(d); }
+    }
+    // DLY
+    if (on('DLY')) {
+      const m = md('DLY').model, d = ctx.createDelay(4.1);
+      d.delayTime.value = clamp(v('DLY', 'time', m === 'Slapbk' ? 110 : 420) / 1000, 0.02, 4);
+      const fb = G(clamp(v('DLY', 'feedback', 30) / 99, 0, 0.95) * 0.85), tn = F('lowpass', /Sweet|999|T-Echo|M-Echo/.test(m) ? 2600 : 9000);
+      d.connect(tn); tn.connect(fb); fb.connect(d);
+      parallel(d, tn, clamp(v('DLY', 'mix', 25) / 99, 0, 1) * 0.9);
+    }
+    // RVB
+    if (on('RVB')) {
+      const m = md('RVB').model, dec = v('RVB', 'decay', 50) / 99;
+      const base = { Room: 1.2, Hall: 3.5, Church: 5, Plate: 2.4, Spring: 2, 'N-Star': 4, 'Deep Sea': 7, 'Mod Verb': 3, 'Clear Sky': 4 }[m] || 2.5;
+      const cv = ctx.createConvolver(); cv.buffer = this.ir(ctx, clamp(0.3 + base * (0.4 + dec * 1.2), 0.3, 8), m === 'Plate' || m === 'Clear Sky' ? 0.55 : 0.3, m === 'Spring');
+      const pre = ctx.createDelay(0.2); pre.delayTime.value = v('RVB', 'pre delay', 20) / 99 * 0.08; pre.connect(cv);
+      parallel(pre, cv, clamp(v('RVB', 'mix', 25) / 99, 0, 1) * 1.1);
+    }
+    // Output: kompresor perata + volume patch
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 3; comp.attack.value = 0.005; comp.release.value = 0.15;
+    const pv = r.patchVolume === '' || r.patchVolume == null ? 60 : +r.patchVolume;
+    chain(comp, G(0.8 * dB((pv - 60) / 40 * 6)));
+    return { input, output: cur, stop() { oscs.forEach((o) => { try { o.stop(); } catch {} }); } };
+  },
+};
+
+/** Karakter preset untuk lencana & pilihan riff. */
+function character(r) {
+  const amp = r.modules.AMP, dst = r.modules.DST;
+  let s = 0;
+  if (amp.on && amp.model) { const c = FXSim.ampClass(amp.model); s += { clean: 0, ac: 0, bass: 0, crunch: 1, hi: 2 }[c] + (+(amp.params.Gain ?? amp.params['Gain 1'] ?? amp.params.VOL ?? 50)) / 99; }
+  if (dst.on) s += /Lazaro|Red Haze|Darktale|Flex|SM Dist|La Charger/.test(dst.model) ? 1.2 : 0.5;
+  const lead = /solo|lead|melodi/i.test(`${r.name} ${r.song} ${r.tips}`);
+  const label = s < 0.9 ? 'Clean' : s < 1.7 ? 'Crunch' : s < 2.5 ? 'Distorsi' : 'High gain';
+  const riff = lead ? 'lead' : s < 0.9 ? 'clean' : s < 2.3 ? 'crunch' : 'metal';
+  return { label, riff, score: s };
+}
+
+const RIFF_LABEL = { clean: 'Petikan', crunch: 'Riff kord', metal: 'Riff metal', lead: 'Melodi' };
+
+const Preview = {
+  ctx: null, src: null, srcGain: null, chain: null, out: null, key: null, recipe: null, riff: null, source: 'synth', t: 0,
+  async ensure() {
+    const ctx = await Rec.ensureCtx(); this.ctx = ctx;
+    if (!this.out) {
+      this.out = ctx.createGain(); this.out.gain.value = 0.9;
+      const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.1;
+      this.out.connect(lim); lim.connect(ctx.destination);
+    }
+    return ctx;
+  },
+  async sourceBuffer() {
+    if (this.source.startsWith('take:')) {
+      try { const t = await DB.get('takes', this.source.slice(5)); if (t) return await this.ctx.decodeAudioData(await t.blob.arrayBuffer()); } catch {}
+      this.source = 'synth';
+    }
+    return Synth.buffer(this.ctx, this.riff);
+  },
+  async play(recipe, key, riff) {
+    this.stop();
+    await this.ensure();
+    if (Rec.recording) { toast('Sedang merekam'); return; }
+    this.recipe = recipe; this.key = key; this.riff = riff || character(recipe).riff;
+    const buf = await this.sourceBuffer();
+    const src = this.ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+    this.srcGain = this.ctx.createGain(); src.connect(this.srcGain);
+    this.mount(FXSim.build(this.ctx, recipe), 0.03);
+    src.start(); this.src = src;
+    this.paint();
+  },
+  mount(ch, fadeSec) {
+    const now = this.ctx.currentTime, fade = this.ctx.createGain();
+    fade.gain.setValueAtTime(0, now); fade.gain.linearRampToValueAtTime(1, now + fadeSec);
+    this.srcGain.connect(ch.input); ch.output.connect(fade); fade.connect(this.out);
+    const old = this.chain;
+    if (old) {
+      old.fade.gain.cancelScheduledValues(now); old.fade.gain.setValueAtTime(old.fade.gain.value, now); old.fade.gain.linearRampToValueAtTime(0, now + fadeSec);
+      setTimeout(() => { try { this.srcGain && this.srcGain.disconnect(old.ch.input); } catch {} try { old.fade.disconnect(); } catch {} old.ch.stop(); }, fadeSec * 1000 + 60);
+    }
+    this.chain = { ch, fade };
+  },
+  update(recipe, key) {
+    if (!this.src || this.key !== key) return;
+    this.recipe = recipe;
+    clearTimeout(this.t);
+    this.t = setTimeout(() => { if (this.src && this.key === key) this.mount(FXSim.build(this.ctx, recipe), 0.06); }, 90);
+  },
+  async setRiff(riff) { this.riff = riff; if (this.src) { const r = this.recipe, k = this.key; await this.play(r, k, riff); } },
+  async setSource(s) { this.source = s; if (this.src) { const r = this.recipe, k = this.key, rf = this.riff; await this.play(r, k, rf); } },
+  stop() {
+    if (this.src) { try { this.src.stop(); } catch {} this.src = null; }
+    if (this.chain) { try { this.chain.fade.disconnect(); } catch {} this.chain.ch.stop(); this.chain = null; }
+    if (this.srcGain) { try { this.srcGain.disconnect(); } catch {} this.srcGain = null; }
+    this.key = null; this.paint();
+  },
+  toggle(recipe, key) { if (this.key === key && this.src) this.stop(); else this.play(recipe, key); },
+  paint() { $$('[data-prev]').forEach((b) => { const on = b.dataset.prev === this.key; b.classList.toggle('playing', on); b.textContent = on ? '■ Stop' : '▶ Dengar'; }); },
+};
+
 // ─── Lab: monitor MIDI ───────────────────────────────────────────────────────
 const Lab = {
   lines: [], max: 600,
@@ -2855,6 +3246,48 @@ const Wizard = {
   },
 };
 
+
+// ─── Cek fitur di pedal pengguna ─────────────────────────────────────────────
+const FEAT = [
+  { k: 'patch', n: 'Ganti patch', q: 'Pedal pindah ke patch berikutnya?', run: () => Control.patch('up') },
+  { k: 'mods', n: 'Modul ON/OFF', q: 'Modul DLY di pedal menyala/mati?', run: () => Control.setMod('DLY', Control.mods.DLY !== true) },
+  { k: 'tuner', n: 'Tuner', q: 'Layar tuner muncul ±2 detik?', run: () => { Midi.cc(CC.tuner, ON); setTimeout(() => Midi.cc(CC.tuner, OFF), 2200); } },
+  { k: 'vol', n: 'Volume patch', q: 'Suara mengecil sebentar? (lalu diset 60)', run: () => { Midi.cc(CC.patchVolume, 15); setTimeout(() => Midi.cc(CC.patchVolume, 60), 1500); } },
+  { k: 'bpm', n: 'Kirim BPM', q: 'Tempo di pedal menjadi 120?', run: () => Control.sendPair(120, CC.bpm1, CC.bpm2) },
+  { k: 'drum', n: 'Drum', q: 'Drum berbunyi ±3 detik?', run: () => { Midi.cc(CC.drumPlay, ON); setTimeout(() => Midi.cc(CC.drumPlay, OFF), 3000); } },
+  { k: 'looper', n: 'Looper', q: 'Menu looper tampil di layar pedal?', run: () => { Midi.cc(CC.loopMenu, ON); setTimeout(() => Midi.cc(CC.loopMenu, OFF), 2500); } },
+];
+const Checks = {
+  get st() { S.checks = S.checks || { patch: true, mods: true }; return S.checks; },
+  set(k, v) { this.st[k] = v; saveS(); this.paint(); },
+  paint() {
+    const st = this.st, box = $('#checks'); box.innerHTML = '';
+    for (const f of FEAT) {
+      const v = st[f.k];
+      box.append(h('div', { class: 'chk' },
+        h('b', {}, f.n, h('small', { class: 'note', style: { display: 'block', fontWeight: 400 }, text: f.q })),
+        h('button', { class: 'btn sm', text: 'Coba', onclick: () => { if (!Midi.connected) { toast('Sambungkan pedal dulu (tab Pedal)'); return; } f.run(); } }),
+        h('button', { class: 'btn sm', text: 'Ya', onclick: () => this.set(f.k, true) }),
+        h('button', { class: 'btn sm', text: 'Tidak', onclick: () => this.set(f.k, false) }),
+        h('span', { class: 'res ' + (v === true ? 'ok' : v === false ? 'no' : 'unk'), text: v === true ? '✓ jalan' : v === false ? '✗ tidak' : 'belum dicek' })));
+    }
+    const name = (k) => FEAT.find((f) => f.k === k).n.toLowerCase();
+    const ok = FEAT.filter((f) => st[f.k] === true).map((f) => name(f.k));
+    const no = FEAT.filter((f) => st[f.k] === false).map((f) => name(f.k));
+    const unk = FEAT.filter((f) => st[f.k] == null).map((f) => name(f.k));
+    const sum = $('#featSummary'); sum.innerHTML = '';
+    if (ok.length) sum.append(h('span', {}, h('b', { class: 'result-ok', text: 'Jalan di pedal Anda: ' }), ok.join(', ')));
+    if (no.length) sum.append(h('span', {}, h('b', { class: 'result-no', text: 'Tidak merespon: ' }), no.join(', ')));
+    if (unk.length) sum.append(h('span', {}, h('b', { text: 'Belum dicek: ' }), unk.join(', ')));
+    sum.append(h('span', {}, h('b', { text: 'Belum bisa dari HP: ' }), 'memutar knob dan memilih model (angka di resep jadi panduan).'));
+    $$('[data-feat]').forEach((el) => { const v = st[el.dataset.feat]; el.classList.toggle('unsupported', v === false); el.title = v === false ? 'Tidak merespon di pedal Anda (hasil Cek fitur)' : ''; });
+  },
+  init() {
+    $('#btnGoChecks').addEventListener('click', () => { Tabs.show('lainnya'); setTimeout(() => $('#checksCard').scrollIntoView({ behavior: 'smooth', block: 'start' }), 60); });
+    this.paint();
+  },
+};
+
 // ─── Lembar pengaturan ───────────────────────────────────────────────────────
 const Settings = {
   open(focusId) {
@@ -2915,7 +3348,7 @@ async function boot() {
   envBanners();
   Tabs.init(); Settings.init(); Lab.init();
   Control.init(); Rec.init(); IRTest.init(); Tones.init(); T3K.init();
-  Picker.init(); Recipe.init(); AI.init(); Library.init(); Wizard.init();
+  Picker.init(); Recipe.init(); AI.init(); Library.init(); Wizard.init(); Checks.init();
   bindSeg('autoMix'); bindSeg('mixTarget'); bindSeg('mixRole'); bindSeg('mixRoom');
   Tabs.onShow.lainnya = () => Tones.render();
   Tabs.onShow.rekam = () => Takes.render();
