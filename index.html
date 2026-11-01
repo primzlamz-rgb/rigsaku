@@ -499,6 +499,12 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
 [data-feat].unsupported { opacity: .45; }
 .player a.btn { white-space: nowrap; flex: none; }
 
+.boxttl { font: 700 17px/1.15 var(--font-label); letter-spacing: .04em; }
+.slothead { display: flex; align-items: center; gap: 12px; }
+.slotnum { font: 700 30px/1 var(--font-mono); padding: 8px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line); color: var(--accent); }
+#recipe { will-change: transform; }
+.sheet { will-change: transform; }
+
 </style>
 </head>
 <body>
@@ -524,7 +530,8 @@ button.mid strong { font: 700 19px/1.15 var(--font-label); overflow-wrap: anywhe
       <ol class="steps-list">
         <li><b>Sambungkan</b> GP-100 ke HP (kabel USB + OTG), lalu tekan tombol oranye.</li>
         <li><b>Pedal</b>: ganti patch dengan ◀ ▶, ketuk modul untuk ON/OFF.</li>
-        <li><b>Preset</b>: cari lagu, tekan <b>▶ Dengar</b> untuk contoh suara, buka resepnya, lalu <b>Terapkan</b>. Model dan knob disetel di pedal sesuai angka di resep, lalu SAVE di pedal.</li>
+        <li><b>Preset</b>: cari lagu, tekan <b>▶ Dengar</b>, buka resepnya, lalu <b>Buat di pedal</b>: aplikasi pindah ke patch kosong pilihan Anda dan mengatur ON/OFF. Setel model &amp; knob di pedal, SAVE, dan preset itu punya patch sendiri.</li>
+        <li>Geser layar ke kanan atau pakai tombol Kembali HP untuk kembali.</li>
         <li><b>Rekam</b>: rekam permainan Anda, hasilnya dirapikan otomatis.</li>
       </ol>
       <div class="featlist" id="featSummary"></div>
@@ -1077,6 +1084,65 @@ const DB = {
   clear(store) { return this.tx(store, 'readwrite', (os) => os.clear()); },
 };
 
+
+// ─── Navigasi lapisan: tombol/gestur Kembali di HP + geser layar ─────────────
+const Nav = {
+  stack: [],
+  open(id, closeFn) {
+    if (this.stack.some((x) => x.id === id)) return;
+    this.stack.push({ id, closeFn });
+    try { history.pushState({ rs: id }, ''); } catch {}
+  },
+  /** Tutup lapisan (dipanggil tombol di layar) lewat riwayat, supaya tombol Kembali HP tetap sinkron. */
+  close(id) {
+    const i = this.stack.findIndex((x) => x.id === id);
+    if (i < 0) return;
+    if (i !== this.stack.length - 1) { const [x] = this.stack.splice(i, 1); x.closeFn(); return; }
+    const top = this.stack[i];
+    try { history.back(); } catch {}
+    setTimeout(() => { if (this.stack[this.stack.length - 1] === top) { this.stack.pop(); top.closeFn(); } }, 350);
+  },
+  init() {
+    window.addEventListener('popstate', () => { const top = this.stack.pop(); if (top) top.closeFn(); });
+  },
+};
+
+const Swipe = {
+  blocked: (t) => !!(t && t.closest && t.closest('input, textarea, select, .kn, .stp, .log, [data-noswipe]')),
+  track(el, { dir, onEnd, follow }) {
+    let s = null;
+    el.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1 || Swipe.blocked(e.target)) { s = null; return; }
+      const t = e.touches[0]; s = { x: t.clientX, y: t.clientY, d: 0, lock: null, t: Date.now(), scroller: el.scrollTop || (e.target.closest && e.target.closest('.recipe-body, .sheet') || {}).scrollTop || 0 };
+    }, { passive: true });
+    el.addEventListener('touchmove', (e) => {
+      if (!s) return;
+      const t = e.touches[0], dx = t.clientX - s.x, dy = t.clientY - s.y;
+      if (s.lock === null && Math.hypot(dx, dy) > 12) {
+        if (dir === 'right') s.lock = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4 ? 'go' : 'no';
+        else if (dir === 'down') s.lock = dy > 0 && Math.abs(dy) > Math.abs(dx) * 1.4 && s.scroller <= 0 ? 'go' : 'no';
+        else s.lock = Math.abs(dx) > Math.abs(dy) * 1.6 ? 'go' : 'no';
+      }
+      if (s.lock !== 'go') return;
+      s.d = dir === 'down' ? Math.max(0, dy) : dir === 'right' ? Math.max(0, dx) : dx;
+      if (follow) { follow.style.transition = 'none'; follow.style.transform = dir === 'down' ? `translateY(${s.d}px)` : `translateX(${s.d}px)`; }
+    }, { passive: true });
+    const end = () => {
+      if (!s) return; const { d, lock, t } = s; s = null;
+      if (lock !== 'go') return;
+      const size = dir === 'down' ? (follow || el).clientHeight : el.clientWidth;
+      const done = Math.abs(d) > size * 0.25 || (Math.abs(d) > 45 && Date.now() - t < 260);
+      if (follow) {
+        follow.style.transition = 'transform .18s ease-out';
+        follow.style.transform = done ? (dir === 'down' ? 'translateY(100%)' : 'translateX(100%)') : '';
+        setTimeout(() => { follow.style.transition = ''; if (done) follow.style.transform = ''; }, 200);
+        if (done) setTimeout(() => onEnd(d), 170);
+      } else if (done) onEnd(d);
+    };
+    el.addEventListener('touchend', end); el.addEventListener('touchcancel', () => { if (s && follow) { follow.style.transform = ''; } s = null; });
+  },
+};
+
 // ─── Tab ─────────────────────────────────────────────────────────────────────
 const Tabs = {
   onShow: {},
@@ -1089,8 +1155,15 @@ const Tabs = {
     window.scrollTo({ top: 0 });
     if (this.onShow[name]) this.onShow[name]();
   },
+  order: ['pedal', 'preset', 'rekam', 'lainnya'],
   init() {
     $$('.tabbar button').forEach((b) => b.addEventListener('click', () => this.show(b.dataset.tab)));
+    // Geser kiri/kanan di layar utama untuk pindah tab
+    Swipe.track($('main'), { dir: 'x', onEnd: (d) => {
+      if (Nav.stack.length) return;
+      const i = this.order.indexOf(S.tab), j = clamp(i + (d < 0 ? 1 : -1), 0, this.order.length - 1);
+      if (j !== i) this.show(this.order[j]);
+    } });
   },
 };
 
@@ -1355,6 +1428,25 @@ const Control = {
     S.active = null; saveS();
     this.paintPatch(true); this.paintActive();
   },
+  /** Lompat ke nomor patch: pakai Program Change bila sudah terbukti jalan, kalau tidak langkah ◀ ▶ dari nomor sekarang. */
+  async jumpTo(target, from) {
+    target = clamp(Math.round(target), 1, 99);
+    if (!(await this.ensureConnected())) return { ok: false, why: 'conn' };
+    if (S.checks && S.checks.pc) { if (!Midi.pc(target - 1)) return { ok: false, why: 'send' }; }
+    else {
+      const cur = from || S.patchNum;
+      if (!cur) return { ok: false, why: 'cur' };
+      const diff = target - cur;
+      for (let i = 0; i < Math.abs(diff); i++) {
+        let up = diff > 0; if (S.swapPatch) up = !up;
+        if (!Midi.cc(up ? CC.patchUp : CC.patchDown, ON)) return { ok: false, why: 'send' };
+        await sleep(90);
+      }
+    }
+    S.patchNum = target; S.active = null; saveS();
+    this.resetMods(); this.paintPatch(true); this.paintActive();
+    return { ok: true };
+  },
   paintPatch(flash) {
     const n = S.patchNum, names = S.patchNames || {};
     $('#patchNumLbl').textContent = n ? `Patch ${String(n).padStart(2, '0')}` : 'Patch';
@@ -1427,10 +1519,12 @@ const Stage = {
   lock: null,
   async open() {
     $('#stage').hidden = false; $('#stageBpm').textContent = S.bpm;
+    Nav.open('stage', () => this.hide());
     try { await document.documentElement.requestFullscreen?.(); } catch {}
     try { this.lock = await navigator.wakeLock?.request('screen'); } catch {}
   },
-  close() {
+  close() { Nav.close('stage'); },
+  hide() {
     $('#stage').hidden = true;
     try { if (document.fullscreenElement) document.exitFullscreen(); } catch {}
     try { this.lock && this.lock.release(); } catch {} this.lock = null;
@@ -2454,6 +2548,15 @@ function recipeText(p) {
   return lines.join('\n');
 }
 
+/** Usulan patch kosong: setelah slot tertinggi yang dipakai Rig Saku, mulai dari 90. */
+function suggestSlot(c) {
+  const linked = Library.slots || [];
+  const all = [...new Set([...linked])];
+  let n = all.length ? Math.max(...all) + 1 : 90;
+  if (n > 99) { n = 99; while (n > 1 && all.includes(n)) n--; }
+  return n;
+}
+
 // ─── Knob: putar dengan jari, ketuk angka untuk mengetik, atau −/+ ─────────────
 function dial(p, value, hue, onChange) {
   const range = p.max - p.min || 1;
@@ -2533,16 +2636,18 @@ const Picker = {
     this.mod = mod; this.cur = cur; this.cb = cb;
     $('#pkTitle').textContent = `Model ${mod}`; $('#pkSearch').value = '';
     this.list(); $('#picker').hidden = false;
+    Nav.open('picker', () => { $('#picker').hidden = true; });
   },
   list() {
     const q = CAT.norm($('#pkSearch').value), box = $('#pkList'); box.innerHTML = '';
     const items = (CAT.byMod[this.mod] || []).filter((e) => !q || CAT.norm(e.name).includes(q) || CAT.norm(e.ref).includes(q));
-    for (const e of items) box.append(h('button', { class: e.name === this.cur ? 'sel' : '', onclick: () => { $('#picker').hidden = true; this.cb(e); } }, h('b', { text: e.name }), h('small', { text: e.ref })));
+    for (const e of items) box.append(h('button', { class: e.name === this.cur ? 'sel' : '', onclick: () => { Nav.close('picker'); this.cb(e); } }, h('b', { text: e.name }), h('small', { text: e.ref })));
     if (!items.length) box.append(h('div', { class: 'empty', text: 'Tidak ada yang cocok.' }));
   },
   init() {
     $('#pkSearch').addEventListener('input', () => this.list());
-    $('#picker').addEventListener('click', (e) => { if (e.target.id === 'picker' || e.target.hasAttribute('data-close')) $('#picker').hidden = true; });
+    $('#picker').addEventListener('click', (e) => { if (e.target.id === 'picker' || e.target.hasAttribute('data-close')) Nav.close('picker'); });
+    Swipe.track($('#picker .sheet'), { dir: 'down', follow: $('#picker .sheet'), onEnd: () => Nav.close('picker') });
   },
 };
 
@@ -2556,8 +2661,10 @@ const Recipe = {
     $('#rcTitle').textContent = this.cur.name;
     this.render();
     $('#recipe').hidden = false; $('#rcBody').scrollTop = 0;
+    Nav.open('recipe', () => this.hide());
   },
-  close() { if (Preview.key === 'rc') Preview.stop(); $('#recipe').hidden = true; if (this.cur && this.cur.saved) Library.render(); },
+  close() { Nav.close('recipe'); },
+  hide() { if (Preview.key === 'rc') Preview.stop(); $('#recipe').hidden = true; if (this.cur && this.cur.saved) Library.render(); },
   changed() {
     const c = this.cur;
     if (S.active && S.active.id === c.id) { S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive(); }
@@ -2592,14 +2699,7 @@ const Recipe = {
       h('p', { text: [c.song && c.song !== c.name ? c.song : '', c.bpm && `${c.bpm} BPM`, character(c).label, c.builtin ? 'preset bawaan (perkiraan)' : c.fromAI ? 'dibuat AI' : ''].filter(Boolean).join(' · ') })));
     body.append(this.player());
 
-    const status = h('div', { class: this.live ? 'applied' : 'note', text: this.live ? '● Preset ini aktif di pedal. ON/OFF modul di bawah langsung terkirim.' : 'Belum diterapkan. Mengubah resep tidak mengubah pedal sampai Anda menekan Terapkan.' });
-    const applyBtn = h('button', { class: 'btn primary', text: this.live ? 'Terapkan ulang ke pedal' : 'Terapkan ke pedal', onclick: () => this.apply(status, applyBtn) });
-    body.append(h('div', { class: 'card applybox' },
-      h('ol', { class: 'steps-list' },
-        h('li', {}, 'Di pedal, pilih patch yang boleh ditimpa.'),
-        h('li', {}, 'Tekan ', h('b', { text: 'Terapkan ke pedal' }), ': modul ON/OFF diatur otomatis.'),
-        h('li', {}, 'Di pedal, pilih model dan putar knob sesuai angka di bawah, lalu tekan ', h('b', { text: 'SAVE' }), '.')),
-      applyBtn, status));
+    body.append(this.pedalBox());
 
     // Modul di resep: ON/OFF
     const tg = h('div', { class: 'toggles' }, MODULES.map((m) => {
@@ -2657,24 +2757,77 @@ const Recipe = {
       body.append(acts);
     }
   },
-  async apply(status, btn) {
-    btn.disabled = true;
-    const ok = await Control.ensureConnected();
+  /** Kotak "di pedal": preset punya slot sendiri, jadi tidak menumpuk di patch yang sedang aktif. */
+  pedalBox() {
+    const c = this.cur, box = h('div', { class: 'card applybox' });
+    const msg = h('div', { class: 'note' });
+    const say = (text, cls) => { msg.className = cls || 'note'; msg.textContent = text; };
+    if (c.slot) {
+      const n = String(c.slot).padStart(2, '0');
+      box.append(h('div', { class: 'slothead' }, h('span', { class: 'slotnum', text: n }), h('div', { class: 'grow' }, h('b', { text: `Tersimpan di pedal: patch ${n}` }), h('small', { class: 'note', style: { display: 'block' }, text: 'Preset ini punya patch sendiri di pedal.' }))),
+        h('button', { class: 'btn primary', text: `Buka patch ${n} di pedal`, onclick: async (e) => {
+          const r = await this.jump(c.slot, e.currentTarget, say); if (!r) return;
+          S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive();
+          for (const m of MODULES) Control.mods[m.id] = !!c.modules[m.id].on; Control.paintMods();
+          say(`✓ Patch ${n} aktif. Mainkan gitar Anda.`, 'applied');
+        } }),
+        this.live ? h('div', { class: 'applied', text: '● Aktif di pedal: ON/OFF modul di bawah langsung terkirim.' }) : msg,
+        h('details', { class: 'fold' }, h('summary', {}, h('span', { class: 'note', text: 'Pindahkan ke patch lain / lepas' })),
+          h('div', { class: 'row', style: { marginTop: '8px' } },
+            h('button', { class: 'btn sm', text: 'Buat ulang di patch lain', onclick: () => { c.slot = null; this.changed(); this.render(); } }),
+            h('button', { class: 'btn sm ghost', text: 'Lepas dari pedal', onclick: () => { if (S.patchNames) delete S.patchNames[c.slot]; c.slot = null; saveS(); this.changed(); this.render(); Library.render(); } }))));
+      return box;
+    }
+    const slotIn = h('input', { class: 'input mono', type: 'number', inputmode: 'numeric', min: 1, max: 99, value: suggestSlot(c), 'aria-label': 'Nomor patch tujuan' });
+    const curIn = h('input', { class: 'input mono', type: 'number', inputmode: 'numeric', min: 1, max: 99, value: S.patchNum || '', placeholder: '?', 'aria-label': 'Nomor patch di layar pedal sekarang' });
+    const needCur = !(S.checks && S.checks.pc);
+    const saveBtn = h('button', { class: 'btn', text: '3 · Sudah saya SAVE di pedal', disabled: true, onclick: async () => {
+      const n = +slotIn.value;
+      c.slot = n; S.patchNames = S.patchNames || {}; S.patchNames[n] = c.name.slice(0, 24); saveS();
+      if (!c.saved) { c.saved = true; c.builtin = false; c.id = uid(); c.created = Date.now(); }
+      S.active = JSON.parse(JSON.stringify(c)); saveS();
+      try { await DB.put('presets', c); } catch {}
+      Control.paintPatch(); Control.paintActive(); Library.render(); this.render();
+      toast(`Tersimpan: "${c.name}" = patch ${String(n).padStart(2, '0')}`, 3500);
+    } });
+    box.append(
+      h('b', { class: 'boxttl', text: 'Buat preset ini di pedal' }),
+      h('p', { class: 'note', text: 'Preset dibuat di patch kosong sendiri, bukan ditumpuk di patch yang sedang aktif.' }),
+      h('div', { class: 'grid2' },
+        h('label', { class: 'field' }, h('span', { text: 'Simpan di patch nomor' }), slotIn),
+        needCur ? h('label', { class: 'field' }, h('span', { text: 'Patch di layar pedal sekarang' }), curIn) : h('div', { class: 'note', text: 'Lompat langsung (sudah dicek jalan).' })),
+      h('button', { class: 'btn primary', text: '1 · Pindah ke patch itu & atur ON/OFF', onclick: async (e) => {
+        const target = +slotIn.value, from = +curIn.value;
+        if (!(target >= 1 && target <= 99)) { say('Isi nomor patch tujuan 1–99.', 'result-no'); slotIn.focus(); return; }
+        if (needCur && !(from >= 1 && from <= 99)) { say('Isi dulu nomor patch yang tampil di layar pedal sekarang.', 'result-no'); curIn.focus(); return; }
+        const r = await this.jump(target, e.currentTarget, say, from); if (!r) return;
+        let fail = 0; for (const m of MODULES) if (!Control.setMod(m.id, !!c.modules[m.id].on)) fail++;
+        if (c.patchVolume !== '' && c.patchVolume != null) Midi.cc(CC.patchVolume, clamp(+c.patchVolume, 0, 100));
+        if (c.bpm) { Control.setBpm(+c.bpm); Control.sendBpm(); }
+        S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive();
+        saveBtn.disabled = false;
+        say(fail ? `Sebagian perintah gagal (${fail}). Tekan lagi.` : `✓ Sekarang di patch ${String(target).padStart(2, '0')}, ON/OFF sudah diatur. Cek nomor di layar pedal.`, fail ? 'result-no' : 'applied');
+      } }),
+      h('div', { class: 'note', text: '2 · Di pedal, pilih model dan putar knob sesuai kartu di bawah, lalu tekan SAVE ke patch yang sama.' }),
+      saveBtn, msg,
+      h('button', { class: 'btn sm ghost', text: 'Hanya ON/OFF di patch yang sedang aktif', onclick: async () => {
+        if (!(await Control.ensureConnected())) { say('Pedal belum tersambung.', 'result-no'); return; }
+        for (const m of MODULES) Control.setMod(m.id, !!c.modules[m.id].on);
+        S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive();
+        say('ON/OFF diatur di patch yang sedang aktif (model & knob patch itu tetap).', 'applied');
+      } }));
+    return box;
+  },
+  async jump(target, btn, say, from) {
+    btn.disabled = true; say('Memindahkan patch…');
+    const r = await Control.jumpTo(target, from);
     btn.disabled = false;
-    if (!ok) { status.className = 'result-no'; status.textContent = 'Pedal belum tersambung. Colok GP-100 lewat OTG, nyalakan, lalu tekan lagi.'; return; }
-    const c = this.cur; let fail = 0;
-    for (const m of MODULES) if (!Control.setMod(m.id, !!c.modules[m.id].on)) fail++;
-    if (c.patchVolume !== '' && c.patchVolume != null) Midi.cc(CC.patchVolume, clamp(+c.patchVolume, 0, 100));
-    if (c.bpm) { Control.setBpm(+c.bpm); Control.sendBpm(); }
-    S.active = JSON.parse(JSON.stringify(c)); saveS(); Control.paintActive();
-    const named = Control.namePatch(c.name);
-    const on = MODULES.filter((m) => c.modules[m.id].on).length;
-    if (fail) { status.className = 'result-no'; status.textContent = `Sebagian perintah gagal (${fail}). Coba tekan lagi.`; return; }
-    this.render();
-    toast(`Terkirim${named ? ' ke patch ' + String(S.patchNum).padStart(2, '0') : ''}: ${on} modul ON, ${9 - on} OFF`, 3500);
+    if (!r.ok) { say(r.why === 'conn' ? 'Pedal belum tersambung. Colok GP-100 lewat OTG, lalu coba lagi.' : r.why === 'cur' ? 'Isi nomor patch yang tampil di layar pedal sekarang.' : 'Gagal mengirim ke pedal.', 'result-no'); return null; }
+    return r;
   },
   init() {
     $('#rcBack').addEventListener('click', () => this.close());
+    Swipe.track($('#recipe'), { dir: 'right', follow: $('#recipe'), onEnd: () => this.close() });
     $('#rcShare').addEventListener('click', () => { if (this.cur) shareText(recipeText(this.cur), this.cur.name); });
   },
 };
@@ -2691,6 +2844,13 @@ const Library = {
       h('div', { class: 'chain' }, on.map((m) => h('span', { class: 'c on', style: { '--hue': m.hue }, text: r.modules[m.id].model ? `${m.id} · ${r.modules[m.id].model}` : m.id }))),
       h('div', { class: 'row nowrap' },
         h('button', { class: 'btn sm prevbtn' + (Preview.key === key ? ' playing' : ''), dataset: { prev: key }, text: Preview.key === key ? '■ Stop' : '▶ Dengar', onclick: (e) => { e.stopPropagation(); Preview.toggle(r, key); } }),
+        r.slot ? h('button', { class: 'btn sm', text: `Patch ${String(r.slot).padStart(2, '0')} ↗`, onclick: async (e) => {
+          e.stopPropagation(); const res = await Control.jumpTo(r.slot);
+          if (!res.ok) { toast(res.why === 'cur' ? 'Atur dulu nomor patch di tab Pedal' : 'Pedal belum tersambung'); return; }
+          S.active = JSON.parse(JSON.stringify(r)); saveS(); Control.paintActive();
+          for (const m of MODULES) Control.mods[m.id] = !!r.modules[m.id].on; Control.paintMods();
+          toast(`Patch ${String(r.slot).padStart(2, '0')} · ${r.name} aktif`);
+        } }) : null,
         h('span', { class: 'go grow', text: 'Buka resep →' })));
     return el;
   },
@@ -2719,6 +2879,7 @@ const Library = {
     const list = $('#presetList'); list.innerHTML = '';
     $('#savedCount').textContent = items.length ? `${items.length}` : '';
     if (!items.length) list.append(h('div', { class: 'empty', text: 'Belum ada. Buka resep lalu tekan "Simpan ke Preset saya".' }));
+    this.slots = items.filter((p) => p.slot).map((p) => +p.slot);
     for (const p of items) {
       if (p.type === 'prst') list.append(this.prstItem(p));
       else { const r = normRecipe(p); r.saved = true; r.builtin = false; list.append(this.card(r, 'SAYA')); }
@@ -3251,6 +3412,7 @@ const Wizard = {
 const FEAT = [
   { k: 'patch', n: 'Ganti patch', q: 'Pedal pindah ke patch berikutnya?', run: () => Control.patch('up') },
   { k: 'mods', n: 'Modul ON/OFF', q: 'Modul DLY di pedal menyala/mati?', run: () => Control.setMod('DLY', Control.mods.DLY !== true) },
+  { k: 'pc', n: 'Lompat langsung ke patch', q: 'Pedal langsung pindah ke patch 10? (Jawab Tidak bila pindah ke nomor lain)', run: () => { Midi.pc(9); S.patchNum = 10; saveS(); Control.paintPatch(true); } },
   { k: 'tuner', n: 'Tuner', q: 'Layar tuner muncul ±2 detik?', run: () => { Midi.cc(CC.tuner, ON); setTimeout(() => Midi.cc(CC.tuner, OFF), 2200); } },
   { k: 'vol', n: 'Volume patch', q: 'Suara mengecil sebentar? (lalu diset 60)', run: () => { Midi.cc(CC.patchVolume, 15); setTimeout(() => Midi.cc(CC.patchVolume, 60), 1500); } },
   { k: 'bpm', n: 'Kirim BPM', q: 'Tempo di pedal menjadi 120?', run: () => Control.sendPair(120, CC.bpm1, CC.bpm2) },
@@ -3292,10 +3454,11 @@ const Checks = {
 const Settings = {
   open(focusId) {
     $('#settings').hidden = false;
+    Nav.open('settings', () => { $('#settings').hidden = true; });
     this.paintStorage();
     if (focusId) setTimeout(() => { const el = $('#' + focusId); el && el.focus(); el && el.scrollIntoView({ block: 'center' }); }, 60);
   },
-  close() { $('#settings').hidden = true; },
+  close() { Nav.close('settings'); },
   fillPorts(outs) {
     const sel = $('#setPort'); const cur = S.port; sel.innerHTML = '';
     sel.append(h('option', { value: '', text: 'Otomatis' }));
@@ -3313,6 +3476,7 @@ const Settings = {
   },
   init() {
     $('#btnSettings').addEventListener('click', () => this.open());
+    Swipe.track($('#settings .sheet'), { dir: 'down', follow: $('#settings .sheet'), onEnd: () => this.close() });
     $('#settings').addEventListener('click', (e) => { if (e.target.id === 'settings' || e.target.hasAttribute('data-close')) this.close(); });
     const ch = $('#setChannel');
     for (let i = 0; i < 16; i++) ch.append(h('option', { value: i, text: `Kanal ${i + 1}${i === 0 ? ' (bawaan)' : ''}`, selected: i === S.channel }));
@@ -3346,7 +3510,7 @@ const Settings = {
 // ─── Mulai ───────────────────────────────────────────────────────────────────
 async function boot() {
   envBanners();
-  Tabs.init(); Settings.init(); Lab.init();
+  Nav.init(); Tabs.init(); Settings.init(); Lab.init();
   Control.init(); Rec.init(); IRTest.init(); Tones.init(); T3K.init();
   Picker.init(); Recipe.init(); AI.init(); Library.init(); Wizard.init(); Checks.init();
   bindSeg('autoMix'); bindSeg('mixTarget'); bindSeg('mixRole'); bindSeg('mixRoom');
